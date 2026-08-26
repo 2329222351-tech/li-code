@@ -1,0 +1,73 @@
+# 通用
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+*.log.*
+*.err
+*.bak
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.egg
+build/
+dist/
+venv/
+.venv/
+env/
+
+# Node
+node_modules/
+.npm/
+.yarn/
+
+# Java / Android
+.gradle/
+build/
+*.apk
+*.aab
+*.dex
+*.class
+local.properties
+*.iml
+.cxx/
+
+# 数据库 / 数据
+*.db
+*.sqlite
+*.sqlite3
+*.parquet
+*.csv
+data/cache/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# ===== 项目特定 =====
+
+# kuaishou-signin 的大 APK 缓存和下载
+kuaishou-signin/downloads/
+kuaishou-signin/detector/_apk_cache/
+# 运行时产物
+kuaishou-signin/logs/
+kuaishou-signin/debug/
+kuaishou-signin/apk-build/
+
+# 显式保留
+!MavisReminder.apk

@@ -1,0 +1,13 @@
+{
+    "updated":  1786205529737,
+    "apps":  [
+                 {
+                     "name":  "Autox.js v7",
+                     "pkg":  "org.autojs.autoxjs.v7"
+                 },
+                 {
+                     "name":  "快手极速版",
+                     "pkg":  "com.kuaishou.nebula"
+                 }
+             ]
+}

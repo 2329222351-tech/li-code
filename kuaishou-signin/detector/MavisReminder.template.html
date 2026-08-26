@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>APP 提醒助手</title>
+<style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+        margin: 0; padding: 0; min-height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+        background: #000;
+        color: #fff;
+        -webkit-font-smoothing: antialiased;
+        overscroll-behavior: none;
+    }
+    body {
+        display: flex; flex-direction: column;
+        max-width: 520px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    /* ====== Header ====== */
+    header {
+        padding: 20px 18px 12px 18px;
+        background: #000;
+        position: sticky; top: 0; z-index: 10;
+    }
+    h1 {
+        font-size: 26px; font-weight: 700;
+        margin: 0 0 4px 0; letter-spacing: -0.3px;
+    }
+    .tagline {
+        font-size: 13px; color: #8e8e93;
+        margin: 0 0 14px 0;
+    }
+
+    /* ====== Status pill ====== */
+    .status {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .status .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .status.ok { background: rgba(52, 199, 89, 0.15); color: #34c759; }
+    .status.ok .dot { background: #34c759; box-shadow: 0 0 8px #34c759; }
+    .status.warn { background: rgba(255, 149, 0, 0.15); color: #ff9500; }
+    .status.warn .dot { background: #ff9500; }
+    .status.err { background: rgba(255, 59, 48, 0.15); color: #ff3b30; }
+    .status.err .dot { background: #ff3b30; }
+    .status .help {
+        margin-left: auto;
+        font-size: 11px;
+        color: rgba(255,255,255,0.5);
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    /* ====== Top action buttons ====== */
+    .top-actions {
+        display: flex; gap: 8px;
+        padding: 12px 18px;
+    }
+    .top-actions button {
+        flex: 1;
+        background: #1c1c1e;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .top-actions button:hover { background: #2c2c2e; }
+    .top-actions button:active { transform: scale(0.98); }
+    .top-actions button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ====== Section title ====== */
+    .section-title {
+        padding: 8px 18px 8px 18px;
+        font-size: 13px;
+        color: #8e8e93;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-title .count {
+        text-transform: none;
+        letter-spacing: 0;
+    }
+    .section-title .count b { color: #0a84ff; }
+
+    /* ====== Search ====== */
+    .search-wrap {
+        position: relative;
+        padding: 0 18px;
+    }
+    .search {
+        width: 100%;
+        background: #1c1c1e;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 15px;
+        padding: 10px 14px 10px 36px;
+        outline: none;
+    }
+    .search::placeholder { color: #6e6e73; }
+    .search-icon {
+        position: absolute; left: 30px; top: 50%;
+        transform: translateY(-50%);
+        color: #6e6e73; font-size: 14px; pointer-events: none;
+    }
+
+    /* ====== Toolbar pills ====== */
+    .toolbar {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 18px 6px 18px;
+    }
+    .toolbar .pill {
+        background: #1c1c1e; color: #fff;
+        padding: 6px 12px; border-radius: 999px;
+        cursor: pointer; user-select: none;
+        font-size: 12px;
+        transition: background 0.15s;
+    }
+    .toolbar .pill:hover { background: #2c2c2e; }
+    .toolbar .pill:active { background: #3a3a3c; }
+
+    /* ====== App list ====== */
+    .list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 0 20px 0;
+        -webkit-overflow-scrolling: touch;
+    }
+    .item {
+        display: flex; align-items: center;
+        padding: 10px 18px;
+        cursor: pointer;
+        transition: background 0.1s;
+        gap: 14px;
+    }
+    .item:hover { background: #1c1c1e; }
+    .item:active { background: #2c2c2e; }
+    .item.selected { background: rgba(10, 132, 255, 0.12); }
+    .item.selected .check {
+        background: #0a84ff; border-color: #0a84ff;
+    }
+    .item.selected .check::after { opacity: 1; }
+    .item.selected .icon { box-shadow: 0 0 0 2px #0a84ff; }
+
+    .icon {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; font-weight: 600;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        user-select: none;
+    }
+    .meta { flex: 1; min-width: 0; }
+    .name {
+        font-size: 15px; font-weight: 500;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        color: #fff;
+    }
+    .pkg {
+        font-size: 12px; color: #8e8e93;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+        margin-top: 2px;
+    }
+    .check {
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        border: 1.5px solid #48484a;
+        flex-shrink: 0;
+        position: relative;
+        transition: all 0.15s;
+    }
+    .check::after {
+        content: "";
+        position: absolute;
+        left: 7px; top: 3px;
+        width: 6px; height: 11px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    .empty {
+        text-align: center;
+        color: #6e6e73;
+        padding: 60px 20px;
+        font-size: 14px;
+    }
+    .empty .hint {
+        font-size: 12px;
+        margin-top: 8px;
+        line-height: 1.6;
+    }
+
+    /* ====== Bottom action ====== */
+    .bottom {
+        position: sticky; bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        border-top: 1px solid #1c1c1e;
+        padding: 12px 18px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        z-index: 20;
+    }
+    .btn-save {
+        width: 100%;
+        background: #0a84ff;
+        color: #fff;
+        border: none;
+        border-radius: 14px;
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s, transform 0.1s, background 0.2s;
+    }
+    .btn-save:hover { opacity: 0.9; }
+    .btn-save:active { transform: scale(0.99); }
+    .btn-save:disabled { background: #3a3a3c; color: #8e8e93; cursor: not-allowed; }
+    .btn-save.success { background: #34c759; }
+
+    /* ====== Toast ====== */
+    .toast {
+        position: fixed; top: 80px; left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: rgba(28, 28, 30, 0.95);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        opacity: 0;
+        transition: all 0.25s;
+        z-index: 100;
+        pointer-events: none;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        max-width: 90%;
+        text-align: center;
+    }
+    .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    .toast.ok { background: rgba(52, 199, 89, 0.95); }
+    .toast.err { background: rgba(255, 59, 48, 0.95); }
+    .toast.warn { background: rgba(255, 149, 0, 0.95); }
+
+    /* ====== Help dialog ====== */
+    .modal-bg {
+        position: fixed; inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 200;
+        display: none;
+        align-items: center; justify-content: center;
+        padding: 20px;
+    }
+    .modal-bg.show { display: flex; }
+    .modal {
+        background: #1c1c1e;
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 400px;
+        width: 100%;
+    }
+    .modal h2 {
+        font-size: 18px; margin: 0 0 12px 0;
+    }
+    .modal p {
+        font-size: 14px; color: #d1d1d6;
+        line-height: 1.6;
+        margin: 0 0 16px 0;
+    }
+    .modal p code {
+        background: #2c2c2e;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 12px;
+    }
+    .modal .close {
+        background: #0a84ff;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .loader {
+        display: inline-block;
+        width: 14px; height: 14px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+    <h1>APP 提醒助手</h1>
+    <p class="tagline">每天没打开就提醒你 · 设置一次，永久生效</p>
+    <div class="status ok" id="status">
+        <span class="dot"></span>
+        <span id="statusText">连接中…</span>
+        <span class="help" id="statusHelp" style="display:none">查看</span>
+    </div>
+</header>
+
+<div class="top-actions">
+    <button id="testBtn" disabled>
+        <span>🧪</span>
+        <span>测试提醒</span>
+    </button>
+    <button id="refreshBtn" disabled>
+        <span>🔄</span>
+        <span>刷新列表</span>
+    </button>
+</div>
+
+<div class="section-title">
+    <span>要监控的 APP</span>
+    <span class="count">已选 <b id="count">0</b> 个</span>
+</div>
+
+<div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search" id="search" placeholder="搜索 APP 名或包名" disabled>
+</div>
+
+<div class="toolbar">
+    <span class="pill" id="toggleAll">全选</span>
+    <span class="pill" id="toggleNone">清空</span>
+</div>
+
+<div class="list" id="list">
+    <div class="empty" id="empty">
+        <div>📱</div>
+        <div style="margin-top:8px" id="emptyText">等连接手机…</div>
+        <div class="hint" id="emptyHint"></div>
+    </div>
+</div>
+
+<div class="bottom">
+    <button class="btn-save" id="saveBtn" disabled>保存设置并推送到手机</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modal">
+    <div class="modal">
+        <h2 id="modalTitle">需要授权</h2>
+        <p id="modalText"></p>
+        <button class="close" onclick="closeModal()">知道了</button>
+    </div>
+</div>
+
+<script>
+const state = {
+    apps: [],
+    selected: new Set(),
+    device: null,
+};
+
+function $(id) { return document.getElementById(id); }
+
+function setStatus(kind, text, helpText) {
+    const el = $('status');
+    el.className = 'status ' + kind;
+    $('statusText').textContent = text;
+    const help = $('statusHelp');
+    if (helpText) {
+        help.style.display = 'inline';
+        help.textContent = '查看';
+        help.onclick = () => showModal('需要做什么', helpText);
+    } else {
+        help.style.display = 'none';
+    }
+}
+
+function showModal(title, text) {
+    $('modalTitle').textContent = title;
+    $('modalText').innerHTML = text;
+    $('modal').classList.add('show');
+}
+function closeModal() { $('modal').classList.remove('show'); }
+
+function showToast(msg, kind) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (kind || '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function() { t.className = 'toast'; }, 2200);
+}
+
+function colorFor(pkg) {
+    let h = 0;
+    for (let i = 0; i < pkg.length; i++) {
+        h = (h * 31 + pkg.charCodeAt(i)) >>> 0;
+    }
+    const hue = h % 360;
+    return 'linear-gradient(135deg, hsl(' + hue + ', 65%, 50%), hsl(' + ((hue + 30) % 360) + ', 65%, 40%))';
+}
+
+function initialFor(name) {
+    if (!name) return '?';
+    return name.trim().charAt(0).toUpperCase();
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(c) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+}
+
+function renderList() {
+    const list = $('list');
+    const f = ($('search').value || '').toLowerCase().trim();
+    const filtered = f
+        ? state.apps.filter(function(a) {
+            return a.name.toLowerCase().indexOf(f) >= 0
+                || a.pkg.toLowerCase().indexOf(f) >= 0;
+        })
+        : state.apps;
+
+    if (state.apps.length === 0) {
+        $('emptyText').textContent = '没有找到 APP';
+        $('emptyHint').textContent = '确认手机已连接、解锁，并允许 USB 调试';
+        list.innerHTML = '';
+        list.appendChild($('empty'));
+        return;
+    }
+    if (filtered.length === 0) {
+        $('emptyText').textContent = '没有匹配的 APP';
+        $('emptyHint').textContent = '';
+        list.innerHTML = '';
+        list.appendChild($('empty'));
+        return;
+    }
+
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < filtered.length; i++) {
+        const a = filtered[i];
+        const div = document.createElement('div');
+        div.className = 'item' + (state.selected.has(a.pkg) ? ' selected' : '');
+        div.dataset.pkg = a.pkg;
+        div.innerHTML =
+            '<div class="icon" style="background:' + colorFor(a.pkg) + '">' + escapeHtml(initialFor(a.name)) + '</div>' +
+            '<div class="meta">' +
+                '<div class="name">' + escapeHtml(a.name) + '</div>' +
+                '<div class="pkg">' + escapeHtml(a.pkg) + '</div>' +
+            '</div>' +
+            '<div class="check"></div>';
+        (function(p) {
+            div.onclick = function() {
+                if (state.selected.has(p)) state.selected.delete(p);
+                else state.selected.add(p);
+                div.classList.toggle('selected');
+                updateCount();
+                updateSaveBtn();
+            };
+        })(a.pkg);
+        frag.appendChild(div);
+    }
+    list.innerHTML = '';
+    list.appendChild(frag);
+}
+
+function updateCount() {
+    $('count').textContent = state.selected.size;
+}
+
+function updateSaveBtn() {
+    $('saveBtn').disabled = state.selected.size === 0;
+    $('saveBtn').textContent = state.selected.size > 0
+        ? '保存设置并推送到手机（' + state.selected.size + ' 个）'
+        : '保存设置并推送到手机';
+}
+
+// ====== API calls ======
+async function fetchStatus() {
+    try {
+        const r = await fetch('/api/status');
+        const data = await r.json();
+        state.device = data;
+
+        if (data.status === 'connected') {
+            setStatus('ok', '已连接 · ' + (data.model || data.device));
+            $('testBtn').disabled = false;
+            $('refreshBtn').disabled = false;
+            $('search').disabled = false;
+        } else if (data.status === 'unauthorized') {
+            setStatus('warn', '需要授权：看手机弹窗点"允许"', '请在手机上点击「允许 USB 调试」<br>如果没看到弹窗，下拉通知栏找一下');
+            $('testBtn').disabled = true;
+            $('refreshBtn').disabled = true;
+        } else if (data.status === 'offline') {
+            setStatus('err', '设备离线：检查 USB 线 + 手机屏幕解锁', '1. 换一根 USB 数据线<br>2. 解锁手机屏幕<br>3. 设置 → 开发者选项 → USB 调试 打开');
+            $('testBtn').disabled = true;
+            $('refreshBtn').disabled = true;
+        } else {
+            setStatus('err', '未找到手机：请连接手机并打开 USB 调试', '1. USB 连电脑<br>2. 手机「设置 → 开发者选项 → USB 调试」打开<br>3. 手机上点「允许」授权电脑');
+            $('testBtn').disabled = true;
+            $('refreshBtn').disabled = true;
+        }
+    } catch (e) {
+        setStatus('err', '服务断开：请重启脚本');
+    }
+}
+
+async function fetchApps() {
+    if (state.device && state.device.status !== 'connected') {
+        showToast('手机没连好', 'warn');
+        return;
+    }
+    $('refreshBtn').innerHTML = '<span class="loader"></span><span>扫描中…</span>';
+    $('refreshBtn').disabled = true;
+
+    try {
+        const r = await fetch('/api/apps');
+        const data = await r.json();
+        if (data.error) {
+            showToast('扫描失败：' + data.error, 'err');
+            state.apps = [];
+        } else {
+            state.apps = data.apps || [];
+            // Preserve selection if same pkg still exists
+            const newSel = new Set();
+            state.selected.forEach(function(p) {
+                if (state.apps.some(function(a) { return a.pkg === p; })) newSel.add(p);
+            });
+            state.selected = newSel;
+            showToast('找到 ' + state.apps.length + ' 个 APP', 'ok');
+        }
+        renderList();
+        updateCount();
+        updateSaveBtn();
+    } catch (e) {
+        showToast('网络错误', 'err');
+    } finally {
+        $('refreshBtn').innerHTML = '<span>🔄</span><span>刷新列表</span>';
+        $('refreshBtn').disabled = false;
+    }
+}
+
+async function saveSettings() {
+    if (state.selected.size === 0) return;
+    const apps = [];
+    state.selected.forEach(function(p) {
+        const a = state.apps.find(function(x) { return x.pkg === p; });
+        if (a) apps.push({ name: a.name, pkg: a.pkg });
+    });
+
+    $('saveBtn').disabled = true;
+    $('saveBtn').textContent = '推送中…';
+    const origText = $('saveBtn').textContent;
+
+    try {
+        const r = await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apps: apps }),
+        });
+        const data = await r.json();
+        if (data.ok) {
+            $('saveBtn').classList.add('success');
+            $('saveBtn').textContent = '✓ 已推送到手机';
+            showToast('已设置 ' + apps.length + ' 个 APP 监控', 'ok');
+            setTimeout(function() {
+                $('saveBtn').classList.remove('success');
+                updateSaveBtn();
+            }, 2500);
+        } else {
+            showToast('保存失败：' + (data.error || '未知错误'), 'err');
+            updateSaveBtn();
+        }
+    } catch (e) {
+        showToast('网络错误', 'err');
+        updateSaveBtn();
+    }
+}
+
+async function sendTest() {
+    $('testBtn').disabled = true;
+    $('testBtn').innerHTML = '<span class="loader"></span><span>发送中…</span>';
+    try {
+        const r = await fetch('/api/test', { method: 'POST' });
+        const data = await r.json();
+        if (data.ok) {
+            showToast('测试通知已发，看手机通知栏', 'ok');
+        } else {
+            showToast('测试失败：' + (data.error || '未知错误'), 'err');
+        }
+    } catch (e) {
+        showToast('网络错误', 'err');
+    } finally {
+        $('testBtn').innerHTML = '<span>🧪</span><span>测试提醒</span>';
+        $('testBtn').disabled = false;
+    }
+}
+
+// ====== Wire up ======
+$('search').oninput = renderList;
+$('toggleAll').onclick = function() {
+    if (state.selected.size === state.apps.length) {
+        state.selected.clear();
+    } else {
+        state.apps.forEach(function(a) { state.selected.add(a.pkg); });
+    }
+    renderList();
+    updateCount();
+    updateSaveBtn();
+};
+$('toggleNone').onclick = function() {
+    state.selected.clear();
+    renderList();
+    updateCount();
+    updateSaveBtn();
+};
+$('saveBtn').onclick = saveSettings;
+$('testBtn').onclick = sendTest;
+$('refreshBtn').onclick = fetchApps;
+
+// Auto-refresh status every 3s if not connected
+function pollStatus() {
+    fetchStatus().then(function() {
+        if (state.device && state.device.status === 'connected' && state.apps.length === 0) {
+            // First time connected — auto pull apps
+            fetchApps();
+        }
+    });
+}
+pollStatus();
+setInterval(function() {
+    if (!state.device || state.device.status !== 'connected') {
+        pollStatus();
+    }
+}, 3000);
+</script>
+</body>
+</html>
