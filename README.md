@@ -2,21 +2,21 @@
 
 > 日常神秘玩意 —— 个人项目代码合集与备份
 
-这里是 `D:/gr/code1/` 目录的快照备份。
-每次重要节点手动同步一次，不做自动同步（避免把运行时产物 / 缓存误传）。
+每个章节（chapter）是完全独立的目录，互不关联。后续新增项目会按序号继续往下排（02、03…）。
 
 ## 目录结构
 
 ```
 li-code/
-├── code1/
-│   ├── MavisReminder.apk        # Android 定时提醒 APP（已签名）
-│   ├── kuaishou-signin/         # 快手自动签到工具（Auto.js + 模拟器）
-│   └── termux-tasker-master/    # termux-tasker 上游源码备份
-└── README.md
+├── README.md
+└── chapters/
+    └── 01-code1/           ← 第一章（当前）
+        ├── MavisReminder.apk        Android 定时提醒 APP（已签名）
+        ├── kuaishou-signin/         快手自动签到工具（Auto.js + 模拟器）
+        └── termux-tasker-master/    termux-tasker 上游源码备份
 ```
 
-## 项目说明
+## 第一章 · 01-code1
 
 ### kuaishou-signin
 基于 Auto.js / autojs-v7 的快手自动签到脚本，配合安卓模拟器（雷电/LDPlayer）使用。
@@ -43,16 +43,8 @@ Mavis 提醒 APP 的已签名 APK，可直接安装到 Android 13+ 设备。
 - `kuaishou-signin/{logs,debug,apk-build}/`：运行时日志、调试截图、中间编译产物
 - `__pycache__/`、`node_modules/`、`.gradle/`、`build/` 等构建产物
 
-> 顶层 `MavisReminder.apk`（项目产物）保留。
-
-## 本地源目录
-
-```
-D:/gr/code1/
-```
-
 ## 注意事项
 
-- `termux-tasker-master/` 是上游开源项目源码，保留仅供本地参考，**不修改后回传**。
 - 仓库是 **Public**，请勿提交任何含密钥、token、个人隐私的内容。
-- 提交前手动 review，**不要**把 `.env`、`*.key` 等文件加进去。
+- `termux-tasker-master/` 是上游开源项目源码，仅供本地参考。
+- 后续新增项目直接开新的 `chapters/02-xxx/`、`03-xxx/` 目录提交即可。
