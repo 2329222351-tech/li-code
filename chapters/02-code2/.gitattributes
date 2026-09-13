@@ -1,0 +1,5 @@
+# Electron 打包产物走 Git LFS（含多个 >100MB 文件，超出 GitHub 单文件硬限制）
+release/** filter=lfs diff=lfs merge=lfs -text
+*.asar filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text

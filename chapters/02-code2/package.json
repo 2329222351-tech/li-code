@@ -1,0 +1,52 @@
+{
+  "name": "code2",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Personal web app (Nuxt 3 + Vue 3 + TypeScript)",
+  "main": "electron/main.mjs",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "dev:electron": "nuxt build && electron .",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "dist:win": "nuxt build && electron-builder --win --config electron-builder.json"
+  },
+  "dependencies": {
+    "nuxt": "^3.15.0",
+    "vue": "^3.5.0",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@nuxt/eslint": "^0.7.0",
+    "@types/node": "^22.10.0",
+    "adm-zip": "^0.6.0",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-updater": "^6.0.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8",
+    "vue-eslint-parser": "^9.4.3",
+    "vue-tsc": "^2.1.10"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver",
+      "electron"
+    ]
+  }
+}

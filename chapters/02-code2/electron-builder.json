@@ -1,0 +1,59 @@
+{
+  "appId": "com.MiniMax.code2",
+  "productName": "code2",
+  "copyright": "Copyright © 2026 code2",
+  "asar": true,
+  "asarUnpack": [
+    ".output/**/*",
+    ".output/server/node_modules/**/*",
+    "node_modules/**/*"
+  ],
+  "directories": {
+    "output": "dist-v3",
+    "buildResources": "build"
+  },
+  "files": [
+    "electron/**/*",
+    ".output/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "server/data",
+      "to": "data",
+      "filter": ["**/*.json"]
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "code2"
+  },
+  "portable": {
+    "artifactName": "${productName}-${version}-portable.${ext}"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "YOUR_GITHUB_USERNAME",
+    "repo": "code2",
+    "releaseType": "release",
+    "channel": "latest"
+  }
+}
