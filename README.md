@@ -14,11 +14,17 @@ li-code/
     │   ├── MavisReminder.apk        Android 定时提醒 APP（已签名）
     │   ├── kuaishou-signin/         快手自动签到工具（Auto.js + 模拟器）
     │   └── termux-tasker-master/    termux-tasker 上游源码备份
-    └── 02-code2/           ← 第二章（当前）
+    └── 02-code2/           ← 第二章
         ├── app/ components/ composables/   Nuxt 3 前端
         ├── server/                         Nitro 服务端 API 与词库
         ├── electron/                       Electron 主进程 / preload
         └── release/                        打包产物（Git LFS）
+    └── 03-code3/           ← 第三章（当前）
+        ├── GPS虚拟定位工具_思路设计.md      设计思路文档
+        └── GpsRoam/                        Android 工程
+            ├── app/src/main/java/com/gpsroam/   Kotlin 源码
+            ├── screenshots/                     界面截图
+            └── ui-prototype/                    HTML 高保真原型
 ```
 
 ## 第一章 · 01-code1
@@ -50,6 +56,23 @@ Nuxt 3 + Vue 3 + TypeScript 个人应用，可打包成 Windows 桌面端（Elec
 
 本地开发：`pnpm install` → `pnpm dev`；打包：`pnpm build` → `node scripts/build-portable.mjs`。
 
+## 第三章 · 03-code3
+
+GpsRoam —— Android 虚拟定位工具，通过官方 Mock Location 接口让手机按指定地点或路线"移动"。
+
+- `app/src/main/java/com/gpsroam/`
+  - `mock/`：`MockLocationInjector.kt` 位置注入、`MockPermission.kt` 权限检测
+  - `engine/`：`WanderEngine.kt` 漫游引擎、`RoutePlan.kt` 路线规划
+  - `coord/`：`CoordinateConverter.kt` 坐标系转换、`GeoMath.kt`、`LatLng.kt`
+  - `record/` / `data/`：轨迹录制与本地存储
+  - `service/`：`WanderService.kt` 前台常驻服务
+  - `ui/`：`MainActivity.kt`、`TrackLibraryActivity.kt`、`TrackPreviewView.kt`
+- `screenshots/`：5 张界面截图
+- `ui-prototype/`：`index.html`、`index-v1.html` 高保真 HTML 原型
+
+自用工具，需在开发者选项里把它选为「模拟位置信息应用」后才能生效。
+仓库内不含 `gradlew`，直接用 Android Studio 打开，或用本机 Gradle 构建。
+
 ## 同步原则
 
 备份时**不包含**以下内容（已通过 `.gitignore` 排除）：
@@ -59,6 +82,7 @@ Nuxt 3 + Vue 3 + TypeScript 个人应用，可打包成 Windows 桌面端（Elec
 - `kuaishou-signin/{logs,debug,apk-build}/`：运行时日志、调试截图、中间编译产物
 - `__pycache__/`、`node_modules/`、`.gradle/`、`build/` 等构建产物
 - `02-code2/dist-fresh/`、`dist-out/`、`dist-out2/`、`dist-v3/`：electron-builder 中间产物（合计约 416MB）
+- `03-code3/GpsRoam/app/build/`（~37MB）、`.gradle/`、`local.properties`、`.cxx/` 等 Android 构建产物与本地环境配置
 
 `02-code2/release/` 例外 —— 作为成品备份保留，但通过 **Git LFS** 跟踪：
 其中 `code2-portable-x64.zip`（323MB）、`code2.exe`（178MB）、`app.asar`（138MB×2）
@@ -69,4 +93,4 @@ Nuxt 3 + Vue 3 + TypeScript 个人应用，可打包成 Windows 桌面端（Elec
 - 仓库是 **Public**，请勿提交任何含密钥、token、个人隐私的内容。
 - `termux-tasker-master/` 是上游开源项目源码，仅供本地参考。
 - LFS 免费额度为 1 GiB 存储 / 1 GiB 月流量，`02-code2/release/` 已占用约 0.9 GiB，接近上限。
-- 后续新增项目直接开新的 `chapters/03-xxx/` 目录提交即可。
+- 后续新增项目直接开新的 `chapters/04-xxx/` 目录提交即可。
