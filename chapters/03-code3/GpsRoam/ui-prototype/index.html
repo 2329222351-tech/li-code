@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPS 漫游 · UI 视觉方案 v2（简洁轻量）</title>
+<style>
+:root{
+  --page:#F0F1F3; --page-card:#FFFFFF; --page-line:#DFE2E7;
+  --page-text:#0F1115; --page-text-2:#5C626D;
+
+  --bg:#FAFAFB; --surface:#FFFFFF; --surface-2:#F3F4F6; --surface-3:#E8EAEE;
+  --line:#EDEEF1; --line-2:#E2E4E9;
+  --text:#16181D; --text-2:#6E7480; --text-3:#A2A8B3;
+  --brand:#1A6DFF; --brand-soft:#E9F0FF; --on-brand:#FFFFFF;
+  --ok:#12A150; --ok-soft:#E6F5EC;
+  --warn:#D98A0B; --warn-soft:#FCF3E2;
+  --err:#E5484D; --err-soft:#FCEDEF;
+  --map-bg:#F7F8FA; --map-land:#E9F1E5; --map-water:#DBEAF7;
+  --map-road:#FFFFFF; --map-road-edge:#E9ECF1; --map-label:#A8AFBA;
+  --mm-bg:#F1EFE9; --mm-green:#CBE3C0; --mm-water:#A9D3EC; --mm-block:#E6E3DB;
+  --mm-hw:#FDCB8D; --mm-hw-edge:#E9A45A; --mm-road:#FFFFFF; --mm-road-edge:#E5CA90;
+  --mm-road2-edge:#DCD6C8; --mm-rail:#3B82D9; --mm-poi:#5B6673; --mm-poibg:#FFFFFF;
+  --jam:#E4564A; --slow:#F2B134; --clear:#3FBF6F; --pin:#FF3B30;
+  --sh-2:0 6px 20px rgba(16,24,40,.07);
+  --sh-3:0 -6px 24px rgba(16,24,40,.10);
+  --r-card:20px; --r-btn:16px; --r-sheet:26px;
+}
+[data-theme="dark"]{
+  --page:#08090B; --page-card:#111317; --page-line:#20242B;
+  --page-text:#ECEEF1; --page-text-2:#98A2B3;
+
+  --bg:#0B0C0E; --surface:#14161A; --surface-2:#1B1E23; --surface-3:#23262C;
+  --line:#1E2127; --line-2:#282C33;
+  --text:#ECEEF1; --text-2:#98A2B3; --text-3:#6B7280;
+  --brand:#5B9BFF; --brand-soft:#16233A; --on-brand:#08111F;
+  --ok:#3ECF6E; --ok-soft:#122A1B;
+  --warn:#F5A623; --warn-soft:#2A2013;
+  --err:#FF6369; --err-soft:#2A1618;
+  --map-bg:#131519; --map-land:#18211A; --map-water:#121E29;
+  --map-road:#23272E; --map-road-edge:#1B1F25; --map-label:#5A626E;
+  --mm-bg:#161C24; --mm-green:#1E2C22; --mm-water:#132C3E; --mm-block:#1E242E;
+  --mm-hw:#5A4526; --mm-hw-edge:#7A5E33; --mm-road:#2C343F; --mm-road-edge:#3C4653;
+  --mm-road2-edge:#333C47; --mm-rail:#2E6BB8; --mm-poi:#97A2B0; --mm-poibg:#212A34;
+  --jam:#C4443A; --slow:#C58F26; --clear:#2F9B5A; --pin:#FF4A40;
+  --sh-2:0 6px 20px rgba(0,0,0,.35);
+  --sh-3:0 -6px 24px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",Roboto,sans-serif;
+  background:var(--page);color:var(--page-text);-webkit-font-smoothing:antialiased}
+.mono{font-family:"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* 外壳 */
+.topbar{height:56px;display:flex;align-items:center;gap:14px;padding:0 20px;background:var(--page-card);
+  border-bottom:1px solid var(--page-line);position:sticky;top:0;z-index:20}
+.topbar h1{font-size:15px;font-weight:650}
+.topbar .sub{font-size:12px;color:var(--page-text-2)}
+.topbar .spacer{flex:1}
+.tbtn{height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--page-line);background:transparent;
+  color:var(--page-text);font-size:12.5px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.tbtn.on{background:var(--brand);border-color:var(--brand);color:#fff}
+[data-theme="dark"] .tbtn.on{color:var(--on-brand)}
+.layout{display:flex;align-items:flex-start;gap:24px;padding:24px 20px 40px}
+.sidenav{width:206px;flex:none;position:sticky;top:80px}
+.sidenav .grp{font-size:11px;color:var(--page-text-2);letter-spacing:.6px;margin:14px 0 6px;padding-left:10px}
+.sidenav .grp:first-child{margin-top:0}
+.sidenav button{width:100%;text-align:left;height:34px;padding:0 10px;border:0;background:transparent;border-radius:9px;
+  color:var(--page-text);font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px}
+.sidenav button:hover{background:var(--page-line)}
+.sidenav button.on{background:var(--brand);color:#fff;font-weight:600}
+[data-theme="dark"] .sidenav button.on{color:var(--on-brand)}
+.sidenav .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.35;flex:none}
+.sidenav button.on .dot{opacity:1}
+.stage{flex:1;display:flex;justify-content:center;min-width:0}
+.phone{width:412px;height:915px;flex:none;border-radius:48px;background:#0B0E13;padding:11px;
+  box-shadow:0 24px 60px rgba(16,24,40,.24);transform:scale(var(--ps,1));transform-origin:top center}
+.screen{width:100%;height:100%;border-radius:38px;overflow:hidden;background:var(--bg);
+  position:relative;display:flex;flex-direction:column;color:var(--text)}
+.statusbar{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+  font-size:12.5px;font-weight:600}
+.sb-right{display:flex;align-items:center;gap:5px}
+.navbar{height:26px;flex:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+.navbar i{width:108px;height:4px;border-radius:2px;background:var(--line-2);display:block}
+.frames{position:relative;flex:1;min-height:0}
+.frame{position:absolute;inset:0;display:none;flex-direction:column}
+.frame.active{display:flex}
+
+/* 组件 */
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.s{width:14px;height:14px}
+.ic.l{width:20px;height:20px}
+.btn{height:52px;border-radius:var(--r-btn);border:0;font-size:15px;font-weight:650;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:8px;background:var(--brand);color:#fff}
+[data-theme="dark"] .btn{color:var(--on-brand)}
+.btn.ghost{background:var(--surface-2);color:var(--text-2)}
+.btn.plain{background:transparent;border:1px solid var(--line-2);color:var(--text)}
+.btn.danger{background:transparent;border:1px solid var(--err);color:var(--err)}
+.btn:disabled{opacity:.35;cursor:default}
+.mini{height:34px;padding:0 12px;border-radius:11px;background:transparent;border:1px solid var(--line-2);
+  color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;gap:6px}
+.mini.nobd{border-color:transparent}
+.seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:2px}
+.seg button{flex:1;height:32px;border:0;background:transparent;border-radius:9px;color:var(--text-2);
+  font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--surface);color:var(--text)}
+[data-theme="dark"] .seg button.on{background:var(--surface-3)}
+.field{height:44px;border-radius:13px;background:var(--surface-2);display:flex;align-items:center;padding:0 12px;gap:8px}
+.field input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font-size:13.5px;font-family:inherit;outline:none}
+.field input::placeholder{color:var(--text-3)}
+.lbl{font-size:11.5px;font-weight:650;color:var(--text-3);letter-spacing:.3px}
+.hint{font-size:11.5px;color:var(--text-3);line-height:1.55}
+.row{display:flex;align-items:center;gap:10px}
+.spacer{flex:1}
+.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:7px;background:var(--brand-soft);
+  color:var(--brand);font-weight:700}
+
+/* 状态：圆点 + 文字 */
+.sflag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-2);font-weight:600}
+.sflag i{width:6px;height:6px;border-radius:50%;background:var(--text-3);display:block}
+.sflag.ok i{background:var(--ok)} .sflag.warn i{background:var(--warn)} .sflag.err i{background:var(--err)}
+.statelbl{font-size:11.5px;font-weight:700;color:var(--text-2)}
+.statelbl.run{color:var(--brand)} .statelbl.pause{color:var(--warn)}
+.statelbl.done{color:var(--ok)} .statelbl.err{color:var(--err)}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--surface-3)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--brand);border:3px solid var(--surface);box-shadow:0 1px 3px rgba(16,24,40,.18);margin-top:-8px}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--surface-3)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border:3px solid var(--surface);border-radius:50%;background:var(--brand)}
+
+/* 主屏 */
+.statusrow{padding:12px 20px 6px;display:flex;align-items:center;gap:12px;flex:none}
+.sdetail{display:none;margin:0 20px 10px;padding:11px 13px;border-radius:14px;background:var(--surface-2);
+  font-size:11.5px;line-height:1.6;color:var(--text-2)}
+.sdetail.open{display:block}
+.sdetail.err{background:var(--err-soft);color:var(--err)}
+.modebar{padding:4px 20px 12px;flex:none}
+.mapwrap{flex:1;min-height:0;margin:0 18px;border-radius:22px;overflow:hidden;position:relative;background:var(--map-bg)}
+.mapwrap svg{display:block;width:100%;height:100%}
+.mapbtn{position:absolute;width:34px;height:34px;border-radius:12px;background:var(--surface);box-shadow:var(--sh-2);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.mapbtn.on{background:var(--brand);color:#fff}
+[data-theme="dark"] .mapbtn.on{color:var(--on-brand)}
+.mb-follow{right:12px;top:12px;width:auto;padding:0 11px;gap:6px;font-size:11.5px;font-weight:700}
+.mb-loc{right:12px;bottom:14px}
+.quick{display:flex;gap:6px;padding:12px 20px 0;flex:none}
+.quick .mini{flex:1;justify-content:center;padding:0 6px}
+.data{padding:14px 20px 0;flex:none}
+.data .coord{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;padding-bottom:12px;
+  border-bottom:1px solid var(--line)}
+.data .coord .cp{color:var(--text-3);font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.grid4 .k{font-size:10.5px;color:var(--text-3);font-weight:650}
+.grid4 .v{font-size:15px;font-weight:650;margin-top:2px}
+.grid4 .u{font-size:10.5px;color:var(--text-3);font-weight:600;margin-left:2px}
+.prog{margin-top:14px}
+.prog .line{height:5px;border-radius:3px;background:var(--surface-3);position:relative;margin-top:7px}
+.prog .fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--brand);width:0;transition:width .3s}
+.prog .knob{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;background:var(--brand);
+  border:2.5px solid var(--surface);transform:translate(-50%,-50%);left:0;transition:left .3s}
+.prog .meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:7px}
+.ctrl{padding:16px 20px 0;flex:none}
+.ctrl-head{display:flex;align-items:baseline;justify-content:space-between}
+.ctrl-head .v{font-size:17px;font-weight:700}
+.presets{display:flex;gap:7px;margin-top:10px}
+.presets button{flex:1;height:34px;border-radius:11px;border:1px solid var(--line-2);background:transparent;
+  color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.presets button.on{background:var(--brand-soft);border-color:transparent;color:var(--brand)}
+.actionbar{display:flex;gap:10px;padding:14px 20px 18px;flex:none}
+.actionbar .btn{flex:1}
+.actionbar .stop{flex:0 0 92px}
+
+/* 弹层 */
+.scrim{position:absolute;inset:0;background:rgba(9,14,22,.40);opacity:0;pointer-events:none;transition:opacity .22s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:var(--r-sheet) var(--r-sheet) 0 0;
+  box-shadow:var(--sh-3);transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;max-height:88%}
+.sheet.open{transform:translateY(0)}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line-2);margin:9px auto 2px;flex:none}
+.sheet-head{padding:6px 20px 10px;display:flex;align-items:center;gap:10px;flex:none}
+.sheet-head h3{font-size:16px;font-weight:650;flex:1}
+.sheet-body{padding:0 20px 16px;overflow:auto;flex:1}
+.sheet-foot{padding:10px 20px 22px;display:flex;gap:10px;flex:none}
+.grp-title{font-size:11.5px;font-weight:700;color:var(--text-3);letter-spacing:.4px;margin:16px 0 8px}
+.grp-title:first-child{margin-top:4px}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:9px 11px;font-size:11.5px;line-height:1.55;
+  margin-top:8px;display:flex;gap:7px}
+.item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:var(--surface-2);margin-bottom:8px}
+.item .box{width:36px;height:36px;border-radius:12px;background:var(--brand-soft);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.item .t{font-size:13.5px;font-weight:600}
+.item .s{font-size:11.5px;color:var(--text-3);margin-top:2px}
+.setrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.setrow:last-child{border-bottom:0}
+.setrow .t{font-size:14px}
+.setrow .s{font-size:11.5px;color:var(--text-3);margin-top:2px}
+.sw{width:42px;height:25px;border-radius:999px;background:var(--surface-3);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw.on{background:var(--brand)}
+.sw.on::after{transform:translateX(17px)}
+
+/* 高德风选点 */
+.pickmap{position:relative;flex:1;min-height:0;overflow:hidden;background:var(--mm-bg)}
+.pickmap>svg{position:absolute;inset:0;width:100%;height:100%}
+.pick-top{position:absolute;left:14px;right:14px;top:10px;display:flex;gap:8px;align-items:center;z-index:3}
+.pick-search{flex:1;min-width:0;height:44px;border-radius:15px;background:var(--surface);box-shadow:var(--sh-2);
+  display:flex;align-items:center;gap:8px;padding:0 13px;color:var(--text-3)}
+.pick-search b{font-weight:400;font-size:13.5px}
+.roundbtn{width:44px;height:44px;border-radius:15px;background:var(--surface);box-shadow:var(--sh-2);
+  display:flex;align-items:center;justify-content:center;color:var(--text);flex:none;cursor:pointer}
+.roundbtn.on{background:var(--brand);color:#fff}
+[data-theme="dark"] .roundbtn.on{color:var(--on-brand)}
+.pick-tools{position:absolute;right:14px;top:130px;display:flex;flex-direction:column;gap:8px;z-index:3}
+.pick-tools .roundbtn{width:38px;height:38px;border-radius:13px}
+.center-pin{position:absolute;left:50%;top:44%;transform:translate(-50%,-100%);z-index:2;pointer-events:none}
+.center-pin .sh{width:24px;height:7px;border-radius:50%;background:rgba(0,0,0,.20);margin:6px auto 0}
+.pick-hint{position:absolute;left:50%;top:calc(44% + 12px);transform:translateX(-50%);z-index:3;background:var(--surface);
+  border-radius:999px;padding:6px 12px;font-size:11.5px;color:var(--text-2);box-shadow:var(--sh-2);
+  white-space:nowrap;display:flex;align-items:center;gap:6px}
+.pick-card{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--surface);
+  border-radius:var(--r-sheet) var(--r-sheet) 0 0;box-shadow:var(--sh-3);padding:8px 20px 22px}
+.pick-card .grab{width:36px;height:4px;border-radius:2px;background:var(--line-2);margin:0 auto 12px}
+.pc-title{font-size:17px;font-weight:700}
+.pc-sub{font-size:12px;color:var(--text-2);margin-top:3px;display:block}
+.pc-coord{display:flex;align-items:center;gap:10px;margin-top:13px}
+.pc-coord .v{font-size:13px;font-weight:600;text-align:right;flex:1}
+.pc-acts{display:flex;gap:8px;margin-top:14px}
+.poi-chip{position:absolute;z-index:2;display:flex;align-items:center;gap:4px;background:var(--mm-poibg);
+  border-radius:7px;padding:2px 7px;font-size:9.5px;color:var(--mm-poi);box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap}
+
+/* 变速 */
+.speed-hero{display:flex;align-items:flex-end;gap:8px;margin-top:2px}
+.speed-num{font-size:46px;font-weight:750;line-height:1;letter-spacing:-1.5px}
+.speed-unit{font-size:13px;color:var(--text-3);font-weight:600;padding-bottom:6px}
+.slider-wrap{position:relative;margin-top:18px}
+.bubble{position:absolute;top:-34px;transform:translateX(-50%);background:var(--brand);color:#fff;border-radius:9px;
+  padding:4px 9px;font-size:12.5px;font-weight:700;white-space:nowrap;transition:left .08s}
+[data-theme="dark"] .bubble{color:var(--on-brand)}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-4px;width:8px;height:8px;background:var(--brand);transform:translateX(-50%) rotate(45deg)}
+.eta-cmp{display:flex;align-items:center;gap:10px;margin-top:16px;padding:13px;border-radius:16px;background:var(--surface-2)}
+.eta-cmp .col{flex:1}
+.eta-cmp .k{font-size:10.5px;color:var(--text-3);font-weight:650}
+.eta-cmp .v{font-size:15px;font-weight:700;margin-top:2px}
+.eta-cmp .old{color:var(--text-3);text-decoration:line-through}
+.eta-cmp .new{color:var(--brand)}
+.tip{display:flex;gap:8px;align-items:flex-start;margin-top:12px;color:var(--text-2);font-size:11.5px;line-height:1.55}
+
+/* 通知 */
+.notif-shade{position:absolute;inset:0;background:rgba(9,14,22,.32)}
+.notif-panel{position:absolute;left:12px;right:12px;top:12px}
+.notif-card{background:var(--surface);border-radius:20px;padding:13px;box-shadow:var(--sh-2);margin-bottom:10px}
+.notif-card.ghost{background:transparent;box-shadow:none;border:1px dashed var(--line-2)}
+.notif-top{display:flex;align-items:center;gap:8px}
+.notif-top .app{width:22px;height:22px;border-radius:7px;background:var(--brand);display:flex;align-items:center;justify-content:center;color:#fff}
+[data-theme="dark"] .notif-top .app{color:var(--on-brand)}
+.notif-top .nm{font-size:11.5px;color:var(--text-2);font-weight:600}
+.notif-title{font-size:14px;font-weight:650;margin-top:8px}
+.notif-sub{font-size:12px;color:var(--text-2);margin-top:3px;line-height:1.5}
+.notif-acts{display:flex;gap:8px;margin-top:11px}
+.notif-acts button{flex:1;height:36px;border-radius:12px;border:1px solid var(--line-2);background:transparent;
+  color:var(--text);font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.notif-acts button.stop{border-color:var(--err);color:var(--err)}
+
+/* 状态页 */
+.centerpad{flex:1;display:flex;flex-direction:column;padding:6px 20px 24px}
+.step{display:flex;gap:12px;padding:14px;border-radius:18px;background:var(--surface-2);margin-bottom:8px}
+.step .num{width:28px;height:28px;border-radius:50%;background:var(--surface-3);color:var(--text-2);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
+.step.act{background:var(--brand-soft)}
+.step.act .num{background:var(--brand);color:#fff}
+[data-theme="dark"] .step.act .num{color:var(--on-brand)}
+.step.done .num{background:var(--ok);color:#fff}
+.step .t{font-size:13.5px;font-weight:650}
+.step .s{font-size:11.5px;color:var(--text-2);margin-top:3px;line-height:1.5}
+.emptymap{flex:1;margin:0 18px;border-radius:22px;border:1.5px dashed var(--line-2);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;color:var(--text-3);background:var(--surface)}
+.emptymap .big{width:54px;height:54px;border-radius:50%;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;color:var(--brand)}
+.skel{flex:1;margin:0 18px;border-radius:22px;background:var(--surface-2);position:relative;overflow:hidden}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,var(--surface) 50%,transparent 80%);animation:sweep 1.4s infinite}
+@keyframes sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--surface-3);border-top-color:var(--brand);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pl 2s ease-out infinite}
+@keyframes pl{0%{transform:scale(.55);opacity:.5}100%{transform:scale(2.6);opacity:0}}
+.crosshair{position:absolute;inset:0;display:none;pointer-events:none}
+.crosshair.show{display:block}
+
+/* 右侧说明 */
+.notes{width:300px;flex:none;position:sticky;top:80px}
+.notes .card{background:var(--page-card);border:1px solid var(--page-line);border-radius:14px;padding:16px;margin-bottom:14px}
+.notes h3{font-size:13px;font-weight:700;margin-bottom:10px}
+.notes p{font-size:12.5px;line-height:1.75;color:var(--page-text-2)}
+.notes ul{margin:8px 0 0 16px}
+.notes li{font-size:12.5px;line-height:1.75;color:var(--page-text-2);margin-bottom:3px}
+.sw-cols{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:10px}
+.sw-col{display:flex;flex-direction:column;gap:4px;align-items:center;font-size:10.5px;color:var(--page-text-2);text-align:center}
+.sw-box{width:100%;height:24px;border-radius:6px;border:1px solid var(--page-line)}
+.sp-row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--page-text-2);padding:5px 0;border-bottom:1px dashed var(--page-line)}
+.sp-row:last-child{border-bottom:0}
+.sp-row b{font-weight:650;color:var(--page-text)}
+@media (max-width:1240px){.notes{display:none}}
+</style>
+</head>
+<body>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-loc" viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4V4z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 012-2h8"/></symbol>
+  <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3l9-16z"/><path d="M12 10v4M12 17.2v.1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.8v14.4L19 12 7 4.8z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.4 6H14a4 4 0 014 4v5.6"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s6-6.1 6-10a6 6 0 10-12 0c0 3.9 6 10 6 10z"/><circle cx="12" cy="11" r="1.8" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+  <symbol id="i-paste" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="5" rx="1.6"/><path d="M16 11v7a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h2"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor" stroke="none"/><rect x="5" y="5" width="3" height="7" rx="1" fill="currentColor" stroke="none"/><rect x="10" y="2.5" width="3" height="9.5" rx="1" fill="currentColor" stroke="none"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 16 12"><path d="M1 4.2a10 10 0 0114 0M3.6 6.8a6.5 6.5 0 018.8 0M6.4 9.4a3 3 0 013.2 0"/><circle cx="8" cy="11.2" r="1.1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3"/><rect x="2.5" y="2.5" width="14" height="7" rx="1.6" fill="currentColor" stroke="none"/><path d="M23.5 4v4" stroke-width="2.4"/></symbol>
+</svg>
+
+<header class="topbar">
+  <h1>GPS 漫游 · UI 视觉方案 v2</h1>
+  <span class="sub">简洁轻量 · 412 × 915</span>
+  <span class="spacer"></span>
+  <span class="sub">旧版对照：<a href="index-v1.html" style="color:var(--brand)">index-v1.html</a></span>
+  <button class="tbtn" id="themeBtn"><span id="themeTxt">深色</span></button>
+</header>
+
+<div class="layout">
+  <nav class="sidenav" id="nav">
+    <div class="grp">主流程</div>
+    <button data-go="main" class="on"><span class="dot"></span>主屏 · 空闲</button>
+    <button data-go="main" data-run="running"><span class="dot"></span>主屏 · 运行中</button>
+    <button data-go="main" data-run="paused"><span class="dot"></span>主屏 · 已暂停</button>
+    <button data-go="main" data-run="done"><span class="dot"></span>主屏 · 已完成</button>
+    <div class="grp">地图与选点</div>
+    <button data-go="pickmap"><span class="dot"></span>地图选点 · 高德风</button>
+    <button data-go="speed"><span class="dot"></span>运行中变速</button>
+    <div class="grp">状态覆盖</div>
+    <button data-go="onboard"><span class="dot"></span>首次启动引导</button>
+    <button data-go="empty"><span class="dot"></span>空状态</button>
+    <button data-go="loading"><span class="dot"></span>路径规划中</button>
+    <button data-go="error"><span class="dot"></span>错误 · 权限失效</button>
+    <div class="grp">弹层与子页</div>
+    <button data-go="main" data-sheet="pick"><span class="dot"></span>选点面板 · 坐标</button>
+    <button data-go="main" data-sheet="tune"><span class="dot"></span>调速与拟真</button>
+    <button data-go="main" data-sheet="places"><span class="dot"></span>常用点位</button>
+    <button data-go="settings"><span class="dot"></span>更多设置</button>
+    <button data-go="notif"><span class="dot"></span>常驻通知</button>
+  </nav>
+
+  <main class="stage">
+    <div class="phone" id="phone">
+      <div class="screen">
+        <div class="statusbar">
+          <span class="mono">17:29</span>
+          <span class="sb-right">
+            <svg class="ic" style="width:17px;height:12px"><use href="#i-signal"/></svg>
+            <svg class="ic" style="width:15px;height:12px"><use href="#i-wifi"/></svg>
+            <svg class="ic" style="width:24px;height:12px"><use href="#i-batt"/></svg>
+          </span>
+        </div>
+
+        <div class="frames">
+
+          <!-- ===== 主屏 ===== -->
+          <section class="frame active" id="f-main" data-run="idle">
+            <div class="statusrow" id="statusrow">
+              <span class="sflag ok"><i></i>模拟位置</span>
+              <span class="sflag ok"><i></i>定位</span>
+              <span class="spacer"></span>
+              <span class="statelbl" id="stateTxt">空闲</span>
+              <svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-d"/></svg>
+            </div>
+            <div class="sdetail" id="sdetail">mock provider 已注册 · 上报 1.0 Hz · WGS-84 · 已运行 00:18:24</div>
+
+            <div class="modebar">
+              <div class="seg" id="modeSeg">
+                <button data-mode="0">定点</button>
+                <button data-mode="1">直线</button>
+                <button data-mode="2" class="on">路线</button>
+                <button data-mode="3">摇杆</button>
+              </div>
+            </div>
+
+            <div class="mapwrap" id="mapwrap">
+              <svg viewBox="0 0 380 400" preserveAspectRatio="xMidYMid slice">
+                <rect width="380" height="400" fill="var(--map-bg)"/>
+                <path d="M0 306 q70 -34 132 -12 t140 -42 108 32 V400 H0Z" fill="var(--map-land)" opacity=".7"/>
+                <path d="M-10 118 q76 42 128 8 t112 62 160 -12" stroke="var(--map-water)" stroke-width="24" fill="none" stroke-linecap="round"/>
+                <g stroke="var(--map-road-edge)" fill="none" stroke-linecap="round">
+                  <path d="M0 182 H380" stroke-width="15"/><path d="M104 0 V400" stroke-width="13"/><path d="M258 0 V400" stroke-width="11"/></g>
+                <g stroke="var(--map-road)" fill="none" stroke-linecap="round">
+                  <path d="M0 182 H380" stroke-width="10"/><path d="M104 0 V400" stroke-width="8.5"/><path d="M258 0 V400" stroke-width="6.5"/></g>
+                <g stroke="var(--map-road)" stroke-width="4" fill="none" opacity=".9">
+                  <path d="M0 268 H380"/><path d="M0 66 H380"/><path d="M188 0 V400"/></g>
+                <text x="18" y="176" font-size="9" fill="var(--map-label)">建国路</text>
+                <text x="112" y="262" font-size="9" fill="var(--map-label)">朝阳门外大街</text>
+
+                <path d="M56 336 L146 252 L232 238 L322 116" stroke="var(--text-3)" stroke-width="5" fill="none"
+                      stroke-dasharray="9 8" stroke-linecap="round" opacity=".8"/>
+                <path id="routeDone" d="M56 336 L146 252 L232 238" stroke="var(--brand)" stroke-width="6" fill="none"
+                      stroke-linecap="round" stroke-linejoin="round" opacity="0"/>
+                <circle cx="56" cy="336" r="7.5" fill="var(--ok)" stroke="#fff" stroke-width="2.4"/>
+                <circle cx="146" cy="252" r="6" fill="var(--surface)" stroke="var(--text-2)" stroke-width="2.4"/>
+                <circle cx="322" cy="116" r="7.5" fill="var(--err)" stroke="#fff" stroke-width="2.4"/>
+                <g id="cursor" opacity="0">
+                  <circle class="pulse" cx="232" cy="238" r="9" fill="var(--brand)" opacity=".35"/>
+                  <g transform="rotate(-32 232 238)"><path d="M232 212 l11 30 -11 -7 -11 7 Z" fill="var(--brand)"/></g>
+                  <circle cx="232" cy="238" r="9.5" fill="var(--brand)" stroke="#fff" stroke-width="2.6"/>
+                </g>
+              </svg>
+              <div class="mapbtn mb-follow on" id="followBtn"><svg class="ic s"><use href="#i-target"/></svg><span id="followTxt">Follow</span></div>
+              <div class="mapbtn mb-loc"><svg class="ic"><use href="#i-loc"/></svg></div>
+              <svg class="crosshair" id="crosshair" viewBox="0 0 380 400" preserveAspectRatio="none">
+                <path d="M190 0 V400 M0 200 H380" stroke="var(--brand)" stroke-width="1" stroke-dasharray="6 6"/>
+                <circle cx="190" cy="200" r="26" fill="none" stroke="var(--brand)" stroke-width="1.5"/>
+              </svg>
+            </div>
+
+            <div class="quick">
+              <button class="mini" data-open="places"><svg class="ic s"><use href="#i-book"/></svg>常用点位</button>
+              <button class="mini" data-go="settings"><svg class="ic s"><use href="#i-file"/></svg>GPX</button>
+              <button class="mini" data-go="settings"><svg class="ic s"><use href="#i-sliders"/></svg>设置</button>
+            </div>
+
+            <div class="data">
+              <div class="coord">
+                <svg class="ic s" style="color:var(--text-3)"><use href="#i-pin"/></svg>
+                <span class="mono" id="tvCoord">39.908120, 116.397455</span>
+                <span class="spacer"></span>
+                <span class="cp"><svg class="ic s"><use href="#i-copy"/></svg>复制</span>
+              </div>
+              <div class="grid4">
+                <div><div class="k">速度</div><div class="v mono"><span id="tvSpeed">0.0</span><span class="u">km/h</span></div></div>
+                <div><div class="k">航向</div><div class="v mono"><span id="tvBear">--</span><span class="u">°</span></div></div>
+                <div><div class="k">精度</div><div class="v mono"><span id="tvAcc">--</span><span class="u">m</span></div></div>
+                <div><div class="k">海拔</div><div class="v mono"><span id="tvAlt">--</span><span class="u">m</span></div></div>
+              </div>
+              <div class="prog">
+                <div class="row" style="justify-content:space-between">
+                  <span class="lbl">已走 <b class="mono" id="tvDone" style="color:var(--text)">0.00</b> / <span class="mono">7.62</span> km</span>
+                  <span class="lbl" id="tvEta">预计 --</span>
+                </div>
+                <div class="line"><div class="fill" id="progFill"></div><div class="knob" id="progKnob"></div></div>
+                <div class="meta"><span>国贸</span><span id="tvPct">0%</span><span>望京 SOHO</span></div>
+              </div>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-head">
+                <span class="lbl">移动速度<span class="tag" id="liveTag" style="display:none;margin-left:6px">实时生效</span></span>
+                <span class="v mono"><span id="tvSpdSet">15</span><span style="font-size:11px;color:var(--text-3)"> km/h</span></span>
+              </div>
+              <input type="range" id="spdRange" min="1" max="120" value="15">
+              <div class="presets" id="presets">
+                <button data-v="5">步行 5</button>
+                <button data-v="15" class="on">骑行 15</button>
+                <button data-v="60">车行 60</button>
+              </div>
+              <div class="presets" id="mults" style="margin-top:7px">
+                <button data-m="1" class="on">倍速 1×</button>
+                <button data-m="2">2×</button>
+                <button data-m="5">5×</button>
+              </div>
+            </div>
+
+            <div class="actionbar">
+              <button class="btn" id="btnMain"><svg class="ic"><use href="#i-play"/></svg><span id="btnMainTxt">开始漫游</span></button>
+              <button class="btn plain stop" id="btnStop" disabled><svg class="ic s"><use href="#i-stop"/></svg>停止</button>
+            </div>
+
+            <div class="navbar"><i></i></div>
+
+            <div class="scrim" id="scrim"></div>
+
+            <!-- 坐标选点 -->
+            <div class="sheet" id="sh-pick">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>选择位置</h3>
+                <button class="mini nobd" style="padding:0 6px" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="grp-title">坐标系</div>
+                <div class="seg"><button>WGS-84</button><button class="on">GCJ-02</button><button>BD-09</button></div>
+                <div class="note"><svg class="ic s" style="margin-top:1px"><use href="#i-warn"/></svg>
+                  <span>地图 App 复制的坐标通常是 GCJ-02，选错会偏移数百米。</span></div>
+                <div class="grp-title">经纬度</div>
+                <div class="row">
+                  <div class="field" style="flex:1"><input class="mono" value="39.908120" inputmode="decimal"></div>
+                  <div class="field" style="flex:1"><input class="mono" value="116.397455" inputmode="decimal"></div>
+                </div>
+                <button class="mini" style="margin-top:8px"><svg class="ic s"><use href="#i-paste"/></svg>从剪贴板粘贴</button>
+                <div class="grp-title">地址搜索</div>
+                <div class="field"><svg class="ic s" style="color:var(--text-3)"><use href="#i-search"/></svg><input placeholder="搜索地点，如「望京 SOHO」"></div>
+                <div class="grp-title">快捷方式</div>
+                <button class="mini" style="width:100%;height:46px;justify-content:flex-start"><svg class="ic"><use href="#i-loc"/></svg>以当前位置为起点</button>
+                <button class="mini" style="width:100%;height:46px;justify-content:flex-start;margin-top:8px" id="btnCross"><svg class="ic"><use href="#i-target"/></svg>在地图上选择（十字准星）</button>
+              </div>
+              <div class="sheet-foot">
+                <button class="btn ghost" style="flex:0 0 110px" data-close>取消</button>
+                <button class="btn" style="flex:1" data-close>确定</button>
+              </div>
+            </div>
+
+            <!-- 调速与拟真 -->
+            <div class="sheet" id="sh-tune">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>调速与拟真</h3>
+                <button class="mini nobd" style="padding:0 6px" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="grp-title">速度抖动幅度</div>
+                <div class="row"><input type="range" min="0" max="30" value="12"><span class="mono" style="font-size:12.5px;width:44px;text-align:right">12%</span></div>
+                <div class="hint" style="margin-top:2px">真实 GPS 速度不会恒定，抖动后更难被识别。</div>
+                <div class="grp-title">精度波动范围</div>
+                <div class="row"><input type="range" min="1" max="30" value="8"><span class="mono" style="font-size:12.5px;width:44px;text-align:right">±8 m</span></div>
+                <div class="grp-title">上报频率</div>
+                <div class="seg"><button>0.5 Hz</button><button class="on">1 Hz</button><button>2 Hz</button></div>
+                <div class="note"><svg class="ic s" style="margin-top:1px"><use href="#i-warn"/></svg><span>偏离 1 Hz 会让轨迹不像真实 GPS，一般不建议改动。</span></div>
+                <div class="grp-title">海拔</div>
+                <div class="seg"><button class="on">固定值</button><button>随机</button></div>
+                <div class="grp-title">行程方式</div>
+                <div class="seg"><button class="on">单程</button><button>循环</button><button>往返</button></div>
+              </div>
+              <div class="sheet-foot"><button class="btn" style="flex:1" data-close>完成</button></div>
+            </div>
+
+            <!-- 常用点位 -->
+            <div class="sheet" id="sh-places">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>常用点位</h3>
+                <span class="spacer"></span>
+                <button class="mini" data-close><svg class="ic s"><use href="#i-plus"/></svg>新增</button>
+                <button class="mini nobd" style="padding:0 6px" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="item">
+                  <span class="box"><svg class="ic"><use href="#i-pin"/></svg></span>
+                  <span><span class="t">望京 SOHO</span><span class="s mono">39.99612, 116.47138 · 8.4 km</span></span>
+                  <span class="spacer"></span><svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                </div>
+                <div class="item">
+                  <span class="box"><svg class="ic"><use href="#i-pin"/></svg></span>
+                  <span><span class="t">国贸三期</span><span class="s mono">39.90812, 116.46122 · 1.2 km</span></span>
+                  <span class="spacer"></span><svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                </div>
+                <div class="item">
+                  <span class="box"><svg class="ic"><use href="#i-pin"/></svg></span>
+                  <span><span class="t">首都机场 T3</span><span class="s mono">40.07990, 116.60310 · 21.7 km</span></span>
+                  <span class="spacer"></span><svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                </div>
+                <div class="hint" style="margin-top:10px">点击载入为起点；长按可重命名、删除或排序。</div>
+              </div>
+              <div class="sheet-foot"><button class="btn ghost" style="flex:1" data-close>关闭</button></div>
+            </div>
+          </section>
+
+          <!-- ===== 地图选点（高德风） ===== -->
+          <section class="frame" id="f-pickmap">
+            <div class="pickmap">
+              <svg viewBox="0 0 412 760" preserveAspectRatio="xMidYMid slice">
+                <rect width="412" height="760" fill="var(--mm-bg)"/>
+                <polygon points="10,640 140,614 186,742 30,770" fill="var(--mm-green)"/>
+                <polygon points="286,60 412,42 412,196 306,214" fill="var(--mm-green)"/>
+                <text x="66" y="700" font-size="9" fill="var(--mm-poi)" opacity=".8">朝阳公园</text>
+                <path d="M-20 96 C 70 168, 18 300, 96 402 S 54 618, 128 786" stroke="var(--mm-water)" stroke-width="28" fill="none" stroke-linecap="round"/>
+                <text x="20" y="470" font-size="9" fill="var(--mm-poi)" opacity=".75">亮马河</text>
+                <g fill="var(--mm-block)">
+                  <rect x="150" y="96" width="58" height="44" rx="3"/><rect x="222" y="80" width="46" height="60" rx="3"/>
+                  <rect x="150" y="164" width="52" height="38" rx="3"/><rect x="216" y="160" width="52" height="52" rx="3"/>
+                  <rect x="40" y="196" width="62" height="46" rx="3"/><rect x="286" y="228" width="66" height="42" rx="3"/>
+                  <rect x="300" y="300" width="58" height="50" rx="3"/><rect x="196" y="330" width="72" height="46" rx="3"/>
+                  <rect x="240" y="556" width="70" height="52" rx="3"/><rect x="330" y="530" width="62" height="46" rx="3"/>
+                  <rect x="150" y="470" width="56" height="44" rx="3"/>
+                </g>
+                <path d="M-20 546 L 196 356 L 300 250 L 432 214" stroke="var(--mm-hw-edge)" stroke-width="22" fill="none" stroke-linecap="round"/>
+                <path d="M-20 546 L 196 356 L 300 250 L 432 214" stroke="var(--mm-hw)" stroke-width="16" fill="none" stroke-linecap="round"/>
+                <text x="24" y="556" font-size="9" fill="var(--mm-poi)">机场高速</text>
+                <g stroke-linecap="round" fill="none">
+                  <path d="M-20 268 L 432 312" stroke="var(--mm-road-edge)" stroke-width="21"/>
+                  <path d="M-20 268 L 432 312" stroke="var(--mm-road)" stroke-width="15"/>
+                  <path d="M262 -20 L 240 786" stroke="var(--mm-road-edge)" stroke-width="19"/>
+                  <path d="M262 -20 L 240 786" stroke="var(--mm-road)" stroke-width="13"/>
+                </g>
+                <text x="300" y="252" font-size="9" fill="var(--mm-poi)" transform="rotate(6 300 252)">阜通东大街</text>
+                <text x="272" y="150" font-size="9" fill="var(--mm-poi)">京密路</text>
+                <g stroke-linecap="round" fill="none" opacity=".92">
+                  <path d="M-20 268 L 120 281" stroke="var(--jam)" stroke-width="6"/>
+                  <path d="M120 281 L 250 295" stroke="var(--slow)" stroke-width="6"/>
+                  <path d="M250 295 L 432 312" stroke="var(--clear)" stroke-width="6"/>
+                  <path d="M258 120 L 252 300" stroke="var(--slow)" stroke-width="5"/>
+                  <path d="M252 300 L 244 520" stroke="var(--jam)" stroke-width="5"/>
+                </g>
+                <g stroke-linecap="round" fill="none">
+                  <path d="M-20 640 L 432 586" stroke="var(--mm-road2-edge)" stroke-width="12"/>
+                  <path d="M-20 640 L 432 586" stroke="var(--mm-road)" stroke-width="8"/>
+                  <path d="M118 -20 L 140 786" stroke="var(--mm-road2-edge)" stroke-width="10"/>
+                  <path d="M118 -20 L 140 786" stroke="var(--mm-road)" stroke-width="6"/>
+                  <g stroke="var(--mm-road)" stroke-width="4" opacity=".95">
+                    <path d="M-20 396 L 432 424"/><path d="M-20 176 L 432 200"/><path d="M-20 726 L 432 700"/>
+                    <path d="M60 -20 L 44 786"/><path d="M330 -20 L 352 786"/><path d="M186 330 L 196 786"/>
+                  </g>
+                </g>
+                <path d="M52 726 L 168 560 L 286 452 L 392 352" stroke="var(--mm-rail)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                <g fill="var(--mm-poibg)" stroke="var(--mm-rail)" stroke-width="2.6">
+                  <circle cx="52" cy="726" r="4"/><circle cx="168" cy="560" r="4"/><circle cx="286" cy="452" r="4"/><circle cx="392" cy="352" r="4"/>
+                </g>
+                <text x="176" y="548" font-size="9" fill="var(--mm-rail)">阜通</text>
+              </svg>
+
+              <div class="pick-top">
+                <div class="roundbtn" data-go="main"><svg class="ic"><use href="#i-chev-l"/></svg></div>
+                <div class="pick-search"><svg class="ic s"><use href="#i-search"/></svg><b>搜索地点、公交、地铁</b></div>
+                <div class="roundbtn"><svg class="ic"><use href="#i-book"/></svg></div>
+              </div>
+
+              <div class="pick-tools">
+                <div class="roundbtn on" data-tg><svg class="ic s"><use href="#i-route"/></svg></div>
+                <div class="roundbtn" data-tg><svg class="ic s"><use href="#i-sliders"/></svg></div>
+                <div class="roundbtn"><svg class="ic s"><use href="#i-plus"/></svg></div>
+                <div class="roundbtn"><svg class="ic s"><use href="#i-minus"/></svg></div>
+                <div class="roundbtn"><svg class="ic s"><use href="#i-loc"/></svg></div>
+              </div>
+
+              <div class="poi-chip" style="left:150px;top:250px"><span style="width:5px;height:5px;border-radius:50%;background:var(--brand)"></span>望京 SOHO</div>
+              <div class="poi-chip" style="left:186px;top:524px"><span style="width:5px;height:5px;border-radius:50%;background:var(--mm-rail)"></span>阜通站</div>
+              <div class="poi-chip" style="left:242px;top:648px"><span style="width:5px;height:5px;border-radius:50%;background:var(--err)"></span>国贸三期</div>
+              <div class="poi-chip" style="left:36px;top:430px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>朝阳公园西门</div>
+
+              <div class="center-pin">
+                <svg width="34" height="44" viewBox="0 0 34 44">
+                  <path d="M17 43S31 26.4 31 18A14 14 0 103 18c0 8.4 14 25 14 25z" fill="var(--pin)"/>
+                  <circle cx="17" cy="17" r="5.4" fill="#fff"/>
+                </svg>
+                <div class="sh"></div>
+              </div>
+              <div class="pick-hint"><svg class="ic s"><use href="#i-target"/></svg>拖动地图移动图钉，或长按选点</div>
+
+              <div class="pick-card">
+                <div class="grab"></div>
+                <div class="row" style="align-items:flex-start">
+                  <span style="flex:1"><span class="pc-title">望京 SOHO</span>
+                    <span class="pc-sub">北京市朝阳区阜通东大街 1 号院</span></span>
+                  <span class="lbl" style="color:var(--brand);font-size:12px">1.2 km</span>
+                </div>
+                <div class="pc-coord">
+                  <div class="seg" style="flex:none;width:196px"><button>WGS-84</button><button class="on">GCJ-02</button><button>BD-09</button></div>
+                  <span class="v mono">39.996120, 116.471380</span>
+                  <svg class="ic s" style="color:var(--text-3)"><use href="#i-copy"/></svg>
+                </div>
+                <div class="pc-acts">
+                  <button class="btn" style="flex:1.5">设为终点</button>
+                  <button class="btn plain" style="flex:1">设为起点</button>
+                  <button class="btn plain" style="flex:1">途径点</button>
+                </div>
+              </div>
+            </div>
+            <div class="navbar" style="position:absolute;bottom:0;left:0;right:0;z-index:6"><i style="background:rgba(255,255,255,.55)"></i></div>
+          </section>
+
+          <!-- ===== 运行中变速 ===== -->
+          <section class="frame" id="f-speed">
+            <div class="statusrow">
+              <span class="sflag ok"><i></i>模拟位置</span>
+              <span class="sflag ok"><i></i>定位</span>
+              <span class="spacer"></span>
+              <span class="statelbl run">运行中</span>
+              <svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-d"/></svg>
+            </div>
+
+            <div class="mapwrap" style="flex:0 0 190px">
+              <svg viewBox="0 0 380 190" preserveAspectRatio="xMidYMid slice">
+                <rect width="380" height="190" fill="var(--map-bg)"/>
+                <path d="M0 150 q70 -20 130 6 t150 -40 100 26 V190 H0Z" fill="var(--map-land)" opacity=".7"/>
+                <g stroke="var(--map-road-edge)" fill="none" stroke-linecap="round">
+                  <path d="M0 96 H380" stroke-width="14"/><path d="M150 0 V190" stroke-width="12"/><path d="M280 0 V190" stroke-width="10"/></g>
+                <g stroke="var(--map-road)" fill="none" stroke-linecap="round">
+                  <path d="M0 96 H380" stroke-width="9"/><path d="M150 0 V190" stroke-width="7"/><path d="M280 0 V190" stroke-width="6"/></g>
+                <path d="M40 148 L120 96 L196 88 L300 40" stroke="var(--text-3)" stroke-width="5" fill="none" stroke-dasharray="9 8" opacity=".8"/>
+                <path d="M40 148 L120 96 L196 88" stroke="var(--brand)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <circle cx="40" cy="148" r="7" fill="var(--ok)" stroke="#fff" stroke-width="2.2"/>
+                <circle cx="300" cy="40" r="7" fill="var(--err)" stroke="#fff" stroke-width="2.2"/>
+                <g><circle class="pulse" cx="196" cy="88" r="9" fill="var(--brand)" opacity=".35"/>
+                  <g transform="rotate(-24 196 88)"><path d="M196 64 l10 28 -10 -6.5 -10 6.5 Z" fill="var(--brand)"/></g>
+                  <circle cx="196" cy="88" r="9" fill="var(--brand)" stroke="#fff" stroke-width="2.4"/></g>
+              </svg>
+              <div class="mapbtn mb-follow on" style="top:10px"><svg class="ic s"><use href="#i-target"/></svg>Follow</div>
+            </div>
+
+            <div style="margin:14px 18px 0;padding:16px 16px 18px;background:var(--surface);border-radius:var(--r-card);flex:none">
+              <div class="row">
+                <span class="lbl" style="font-size:12px">实时调速</span>
+                <span class="spacer"></span>
+                <span class="tag">不打断位移</span>
+              </div>
+              <div class="speed-hero">
+                <span class="speed-num mono" id="spNum">30.0</span>
+                <span class="speed-unit">km/h</span>
+                <span class="spacer"></span>
+                <span class="tag" id="spMult" style="background:var(--brand);color:#fff;font-size:12px;padding:4px 10px">2×</span>
+              </div>
+              <div class="slider-wrap">
+                <span class="bubble mono" id="spBubble" style="left:24%">30 km/h</span>
+                <input type="range" id="spRange" min="1" max="120" value="30">
+              </div>
+              <div class="presets" id="spMults" style="margin-top:14px">
+                <button data-m="1">1× 慢速</button>
+                <button data-m="2" class="on">2× 常速</button>
+                <button data-m="5">5× 快速</button>
+              </div>
+              <div class="eta-cmp">
+                <div class="col"><div class="k">预计剩余</div><div class="v mono old">18 分钟</div></div>
+                <svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                <div class="col"><div class="k">调速后</div><div class="v mono new" id="spEta">8.8 分钟</div></div>
+                <div class="col" style="text-align:right"><div class="k">预计到达</div><div class="v mono" id="spArr">16:05</div></div>
+              </div>
+              <div class="tip">
+                <svg class="ic s" style="margin-top:1px;color:var(--brand)"><use href="#i-check"/></svg>
+                <span>拖动即时预览，松手后生效。只改变推进速率，当前位置、航向与已走轨迹都不重置。</span>
+              </div>
+            </div>
+
+            <div class="actionbar">
+              <button class="btn" style="flex:1"><svg class="ic s"><use href="#i-pause"/></svg>暂停</button>
+              <button class="btn danger stop" style="flex:0 0 92px">停止</button>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 首次启动引导 ===== -->
+          <section class="frame" id="f-onboard">
+            <div class="statusrow">
+              <span class="sflag warn"><i></i>权限未就绪</span>
+              <span class="spacer"></span>
+              <span class="statelbl">待完成 2 / 3</span>
+            </div>
+            <div class="centerpad" style="justify-content:flex-start;padding-top:6px">
+              <div class="step done">
+                <span class="num"><svg class="ic s" style="stroke-width:2.6"><use href="#i-check"/></svg></span>
+                <span><span class="t">授予定位权限</span><span class="s">用于读取当前位置作为起点。</span></span>
+              </div>
+              <div class="step act">
+                <span class="num">2</span>
+                <span><span class="t">选择模拟位置信息应用</span><span class="s">开发者选项 → 选择模拟位置信息应用 → 选中「GPS 漫游」。</span></span>
+              </div>
+              <div class="step">
+                <span class="num">3</span>
+                <span><span class="t">开启位置服务</span><span class="s">系统定位开关需保持开启，否则写入的坐标不会被采用。</span></span>
+              </div>
+              <div style="flex:1"></div>
+              <button class="btn" style="width:100%">前往开发者选项</button>
+              <div class="hint" style="text-align:center;margin-top:10px">分步引导，不在首屏直接报错。</div>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 空状态 ===== -->
+          <section class="frame" id="f-empty">
+            <div class="statusrow">
+              <span class="sflag ok"><i></i>模拟位置</span>
+              <span class="sflag ok"><i></i>定位</span>
+              <span class="spacer"></span>
+              <span class="statelbl">空闲</span>
+              <svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-d"/></svg>
+            </div>
+            <div class="modebar">
+              <div class="seg"><button class="on">定点</button><button>直线</button><button>路线</button><button>摇杆</button></div>
+            </div>
+            <div class="emptymap">
+              <span class="big"><svg class="ic l"><use href="#i-plus"/></svg></span>
+              <span style="font-size:13.5px;font-weight:600">长按地图添加起点</span>
+              <span style="font-size:11.5px">或从下方「常用点位」载入一个位置</span>
+            </div>
+            <div class="quick" style="padding-bottom:16px">
+              <button class="mini" style="flex:1;justify-content:center"><svg class="ic s"><use href="#i-book"/></svg>常用点位</button>
+              <button class="mini" style="flex:1;justify-content:center"><svg class="ic s"><use href="#i-file"/></svg>导入 GPX</button>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 路径规划中 ===== -->
+          <section class="frame" id="f-loading">
+            <div class="statusrow">
+              <span class="sflag ok"><i></i>模拟位置</span>
+              <span class="sflag ok"><i></i>定位</span>
+              <span class="spacer"></span>
+              <span class="statelbl">规划中</span>
+            </div>
+            <div class="modebar">
+              <div class="seg"><button>定点</button><button>直线</button><button class="on">路线</button><button>摇杆</button></div>
+            </div>
+            <div class="skel">
+              <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;
+                background:var(--surface);border-radius:999px;padding:10px 16px;box-shadow:var(--sh-2)">
+                <span class="spin"></span><span style="font-size:12.5px;font-weight:600">正在规划路线…</span>
+              </div>
+            </div>
+            <div class="data" style="opacity:.5">
+              <div class="coord"><svg class="ic s" style="color:var(--text-3)"><use href="#i-route"/></svg>
+                <span class="mono">国贸 → 望京 SOHO</span></div>
+              <div class="prog"><div class="row" style="justify-content:space-between"><span class="lbl">总距离 计算中</span></div>
+                <div class="line"><div class="fill" style="width:38%"></div></div></div>
+            </div>
+            <div class="actionbar"><button class="btn ghost" style="flex:1">取消</button></div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 错误态 ===== -->
+          <section class="frame" id="f-error">
+            <div class="statusrow">
+              <span class="sflag err"><i></i>模拟位置未授权</span>
+              <span class="spacer"></span>
+              <span class="statelbl err">已停止</span>
+              <svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-d"/></svg>
+            </div>
+            <div class="sdetail err open">运行中检测到模拟位置权限被撤销，已自动停止注入。<br>错误码：MOCK_PERMISSION_REVOKED</div>
+            <div class="modebar">
+              <div class="seg"><button>定点</button><button>直线</button><button class="on">路线</button><button>摇杆</button></div>
+            </div>
+            <div class="mapwrap" style="opacity:.5">
+              <svg viewBox="0 0 380 400" preserveAspectRatio="xMidYMid slice">
+                <rect width="380" height="400" fill="var(--map-bg)"/>
+                <g stroke="var(--map-road-edge)" fill="none" stroke-linecap="round">
+                  <path d="M0 182 H380" stroke-width="15"/><path d="M104 0 V400" stroke-width="13"/><path d="M258 0 V400" stroke-width="11"/></g>
+                <g stroke="var(--map-road)" fill="none" stroke-linecap="round">
+                  <path d="M0 182 H380" stroke-width="10"/><path d="M104 0 V400" stroke-width="8.5"/><path d="M258 0 V400" stroke-width="6.5"/></g>
+                <path d="M56 336 L146 252 L232 238 L322 116" stroke="var(--text-3)" stroke-width="5" fill="none" stroke-dasharray="9 8" opacity=".7"/>
+                <circle cx="56" cy="336" r="7.5" fill="var(--ok)" stroke="#fff" stroke-width="2.4"/>
+                <circle cx="322" cy="116" r="7.5" fill="var(--err)" stroke="#fff" stroke-width="2.4"/>
+                <circle cx="232" cy="238" r="9.5" fill="var(--text-3)" stroke="#fff" stroke-width="2.6"/>
+              </svg>
+              <div class="mapbtn mb-loc" style="opacity:.5"><svg class="ic"><use href="#i-loc"/></svg></div>
+            </div>
+            <div class="quick">
+              <button class="mini" style="flex:1;justify-content:center;color:var(--err);border-color:var(--err)"><svg class="ic s"><use href="#i-shield"/></svg>重新授权</button>
+              <button class="mini" style="flex:1;justify-content:center">查看帮助</button>
+            </div>
+            <div class="data" style="opacity:.55">
+              <div class="coord"><span class="mono" style="color:var(--text-3)">已停止在 39.931204, 116.430188</span></div>
+              <div class="grid4">
+                <div><div class="k">速度</div><div class="v mono">0.0<span class="u">km/h</span></div></div>
+                <div><div class="k">航向</div><div class="v mono">--<span class="u">°</span></div></div>
+                <div><div class="k">精度</div><div class="v mono">--<span class="u">m</span></div></div>
+                <div><div class="k">海拔</div><div class="v mono">--<span class="u">m</span></div></div>
+              </div>
+            </div>
+            <div class="actionbar"><button class="btn ghost" style="flex:1"><svg class="ic s"><use href="#i-route"/></svg>路线已保留</button></div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 更多设置 ===== -->
+          <section class="frame" id="f-settings">
+            <div class="row" style="padding:6px 20px 10px;gap:8px">
+              <button class="mini nobd" style="padding:0 6px" data-go="main"><svg class="ic"><use href="#i-chev-l"/></svg></button>
+              <span style="font-size:17px;font-weight:700">设置</span>
+            </div>
+            <div style="flex:1;overflow:auto;padding:0 20px 20px">
+              <div class="grp-title">显示</div>
+              <div>
+                <div class="setrow"><span><span class="t">坐标显示格式</span><span class="s">WGS-84 · 度分秒</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">速度单位</span><span class="s">km/h</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">主题</span><span class="s">浅色</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">地图底图</span><span class="s">轻量 / 真实</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+              </div>
+              <div class="grp-title">运行</div>
+              <div>
+                <div class="setrow"><span><span class="t">后台常驻通知</span><span class="s">关闭会导致服务被系统回收</span></span><span class="spacer"></span><span class="sw on" data-sw></span></div>
+                <div class="setrow"><span><span class="t">屏幕常亮</span></span><span class="spacer"></span><span class="sw" data-sw></span></div>
+                <div class="setrow"><span><span class="t">到达终点后循环</span></span><span class="spacer"></span><span class="sw" data-sw></span></div>
+              </div>
+              <div class="grp-title">数据</div>
+              <div>
+                <div class="setrow"><span><span class="t">GPX 导入 / 导出</span><span class="s">轨迹可存可分享</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">常用点位</span><span class="s">3 个</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">清除本地数据</span><span class="s">位置数据默认仅本地存储</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--err)"><use href="#i-trash"/></svg></div>
+              </div>
+              <div style="margin-top:18px;padding:14px;border-radius:16px;background:var(--warn-soft)">
+                <div class="row" style="align-items:flex-start;gap:8px">
+                  <svg class="ic s" style="color:var(--warn);margin-top:2px"><use href="#i-warn"/></svg>
+                  <span style="font-size:11.5px;line-height:1.65;color:var(--text)">
+                    <b>用途声明</b>：本工具仅用于开发测试、定位类应用 QA 与个人位置隐私保护。<br>
+                    禁止用于考勤作弊、游戏外挂、欺诈或伪造物流轨迹等违规违法行为。
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 常驻通知 ===== -->
+          <section class="frame" id="f-notif">
+            <div class="notif-shade"></div>
+            <div style="flex:1;background:var(--bg);position:relative">
+              <div class="notif-panel">
+                <div class="notif-card">
+                  <div class="notif-top">
+                    <span class="app"><svg class="ic s"><use href="#i-loc"/></svg></span>
+                    <span class="nm">GPS 漫游</span>
+                    <span class="spacer"></span>
+                    <span class="statelbl run">进行中</span>
+                  </div>
+                  <div class="notif-title">正在模拟位置 · 路线模式</div>
+                  <div class="notif-sub mono">39.931204, 116.430188 · 15.2 km/h · 42%</div>
+                  <div class="notif-acts">
+                    <button><svg class="ic s"><use href="#i-pause"/></svg>暂停</button>
+                    <button class="stop"><svg class="ic s"><use href="#i-stop"/></svg>停止</button>
+                  </div>
+                </div>
+                <div class="notif-card ghost">
+                  <div class="notif-top">
+                    <span class="app" style="background:var(--surface-3);color:var(--text-2)"><svg class="ic s"><use href="#i-pause"/></svg></span>
+                    <span class="nm">GPS 漫游 · 已暂停</span>
+                    <span class="spacer"></span>
+                    <span class="statelbl pause">暂停</span>
+                  </div>
+                  <div class="notif-sub" style="margin-top:8px">已暂停在 3.20 km 处，进度 42%</div>
+                  <div class="notif-acts">
+                    <button><svg class="ic s"><use href="#i-play"/></svg>继续</button>
+                    <button class="stop"><svg class="ic s"><use href="#i-stop"/></svg>停止</button>
+                  </div>
+                </div>
+                <div class="hint" style="text-align:center;margin-top:10px">ongoing 通知，不可滑动清除</div>
+              </div>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="notes">
+    <div class="card">
+      <h3>v2 的三个改变</h3>
+      <ul>
+        <li><b>去掉边框</b>：卡片不再描边，靠背景色差与留白分区</li>
+        <li><b>状态轻量化</b>：chip 换成 6px 圆点 + 文字，只有出错才上底色</li>
+        <li><b>圆角放大、阴影收敛</b>：卡片 20 / 按钮 16 / 弹层 26，只留浮层投影</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>色板</h3>
+      <p>界面主体接近无彩，只让状态与强调出彩。</p>
+      <div class="sw-cols">
+        <div class="sw-col"><div class="sw-box" style="background:#1A6DFF"></div>主色</div>
+        <div class="sw-col"><div class="sw-box" style="background:#12A150"></div>可用</div>
+        <div class="sw-col"><div class="sw-box" style="background:#D98A0B"></div>待办</div>
+        <div class="sw-col"><div class="sw-box" style="background:#E5484D"></div>出错</div>
+        <div class="sw-col"><div class="sw-box" style="background:#F3F4F6"></div>面</div>
+        <div class="sw-col"><div class="sw-box" style="background:#FAFAFB"></div>底</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>栅格 · 圆角 · 字号</h3>
+      <div class="sp-row"><span>栅格 / 页边距</span><b>4 dp / 20 dp</b></div>
+      <div class="sp-row"><span>卡片 / 按钮 / 弹层</span><b>20 / 16 / 26</b></div>
+      <div class="sp-row"><span>标题 · 正文</span><b>17·700 / 13.5</b></div>
+      <div class="sp-row"><span>数据 · 大数</span><b>15·650 / 46·750</b></div>
+      <div class="sp-row"><span>滑杆</span><b>轨道 4 · 滑块 20</b></div>
+    </div>
+    <div class="card">
+      <h3>两级底图</h3>
+      <ul>
+        <li><b>主屏 · 轻量</b>：只画主路网与绿地水系，无建筑块</li>
+        <li><b>选点页 · 真实</b>：道路分级 + 路况三色 + 地铁 + POI</li>
+        <li>两套配色变量隔离：<code>--map-*</code> / <code>--mm-*</code>，换肤互不影响</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>当前画面</h3>
+      <p id="noteText">主屏空闲态：无卡片边框，状态用圆点，地图保留最大面积。</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, phone=document.getElementById('phone');
+  function fit(){var s=Math.min(1,Math.max(.55,(window.innerHeight-150)/915));
+    phone.style.setProperty('--ps',s);phone.style.height=(915*s)+'px';phone.style.marginBottom=(915*(s-1))+'px';}
+  fit();window.addEventListener('resize',fit);
+
+  document.getElementById('themeBtn').onclick=function(){
+    var d=root.getAttribute('data-theme')==='dark';
+    root.setAttribute('data-theme',d?'light':'dark');
+    document.getElementById('themeTxt').textContent=d?'深色':'浅色';
+  };
+
+  var frames={main:'f-main',pickmap:'f-pickmap',speed:'f-speed',onboard:'f-onboard',empty:'f-empty',
+    loading:'f-loading',error:'f-error',settings:'f-settings',notif:'f-notif'};
+  var notes={
+    main:'主屏：卡片去掉描边，状态退化为圆点 + 文字，地图与留白成为主角。',
+    pickmap:'地图选点：真实感底图保留，外壳按轻量规范重做（搜索栏、工具列、位置卡片）。',
+    speed:'运行中变速：大数字 + 跟随气泡 + 档位，剩余时间做新旧对比，明确告知不重置位置。',
+    onboard:'首次启动：分步引导，只有未完成项上底色，已完成项降为灰底。',
+    empty:'空状态：虚线占位更淡，重心放在文字指引上。',
+    loading:'路径规划中：骨架屏替代整屏转圈，提示浮在地图上。',
+    error:'错误态：状态行转红并展开详情，地图降透明度，操作换成恢复动作。',
+    settings:'更多设置：只用细分隔线，不用卡片边框；免责声明常驻底部。',
+    notif:'常驻通知：白卡无边框，运行与暂停两态用文字色区分。'
+  };
+  function show(n){Object.keys(frames).forEach(function(k){
+    document.getElementById(frames[k]).classList.toggle('active',k===n);});
+    document.getElementById('noteText').textContent=notes[n]||'';}
+  function closeSheets(){['pick','tune','places'].forEach(function(k){
+    document.getElementById('sh-'+k).classList.remove('open');});
+    document.getElementById('scrim').classList.remove('show');
+    document.getElementById('crosshair').classList.remove('show');}
+
+  document.querySelectorAll('#nav button').forEach(function(b){
+    b.onclick=function(){
+      document.querySelectorAll('#nav button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); closeSheets(); show(b.dataset.go);
+      if(b.dataset.run)setRun(b.dataset.run); else if(b.dataset.go==='main')setRun('idle');
+      if(b.dataset.sheet)setTimeout(function(){openSheet(b.dataset.sheet);},240);
+    };
+  });
+  document.querySelectorAll('[data-go]').forEach(function(b){
+    if(b.closest('#nav'))return;
+    b.onclick=function(){closeSheets();show(b.dataset.go);};
+  });
+  function openSheet(k){document.getElementById('sh-'+k).classList.add('open');
+    document.getElementById('scrim').classList.add('show');}
+  document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openSheet(b.dataset.open);};});
+  document.querySelectorAll('[data-close]').forEach(function(b){b.onclick=closeSheets;});
+  document.getElementById('scrim').onclick=closeSheets;
+
+  document.querySelectorAll('.seg').forEach(function(seg){
+    seg.querySelectorAll('button').forEach(function(b){
+      b.onclick=function(){
+        if(seg.id==='modeSeg'&&run!=='idle')return;
+        seg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+        b.classList.add('on');
+      };
+    });
+  });
+  document.querySelectorAll('[data-sw],[data-tg]').forEach(function(s){s.onclick=function(){s.classList.toggle('on');};});
+
+  document.getElementById('btnCross').onclick=function(){
+    document.getElementById('crosshair').classList.toggle('show');};
+  document.getElementById('crosshair').onclick=function(){this.classList.remove('show');};
+
+  var follow=true;
+  document.getElementById('followBtn').onclick=function(){
+    follow=!follow;this.classList.toggle('on',follow);
+    document.getElementById('followTxt').textContent=follow?'Follow':'Free';};
+
+  var spd=document.getElementById('spdRange');
+  var LEFT_KM=4.42, BASE=15, spRange=document.getElementById('spRange');
+  function syncSpeed(v){
+    spRange.value=v;
+    var pct=Math.round((v-1)/119*100);
+    document.getElementById('spNum').textContent=(+v).toFixed(1);
+    var bb=document.getElementById('spBubble');
+    bb.style.left='calc('+pct+'% + '+((50-pct)*0.22)+'px)';
+    bb.textContent=v+' km/h';
+    var eta=LEFT_KM/v*60;
+    document.getElementById('spEta').textContent=(eta<10?eta.toFixed(1):Math.round(eta))+' 分钟';
+    var arr=new Date(2026,8,13,17,29);arr.setMinutes(arr.getMinutes()+Math.round(eta));
+    document.getElementById('spArr').textContent=('0'+arr.getHours()).slice(-2)+':'+('0'+arr.getMinutes()).slice(-2);
+    var m=v/BASE;
+    document.getElementById('spMult').textContent=
+      (Math.abs(m-1)<.01?'1':(Math.abs(m-2)<.01?'2':(Math.abs(m-5)<.01?'5':m.toFixed(1))))+'×';
+    document.querySelectorAll('#spMults button').forEach(function(x){x.classList.toggle('on',15*(+x.dataset.m)===+v);});
+  }
+  function setSpeed(v,from){
+    spd.value=v;document.getElementById('tvSpdSet').textContent=v;
+    if(from!=='preset'){document.querySelectorAll('#presets button').forEach(function(x){
+      x.classList.toggle('on',+x.dataset.v===+v);});}
+    if(from!=='mult'){document.querySelectorAll('#mults button').forEach(function(x){
+      x.classList.toggle('on',15*(+x.dataset.m)===+v);});}
+    syncSpeed(v);
+  }
+  spd.oninput=function(){setSpeed(+spd.value);};
+  spRange.oninput=function(){
+    var v=+spRange.value;syncSpeed(v);spd.value=v;
+    document.getElementById('tvSpdSet').textContent=v;
+    document.querySelectorAll('#presets button').forEach(function(x){x.classList.toggle('on',+x.dataset.v===v);});
+    document.querySelectorAll('#mults button').forEach(function(x){x.classList.toggle('on',15*(+x.dataset.m)===v);});
+  };
+  document.querySelectorAll('#presets button').forEach(function(b){
+    b.onclick=function(){setSpeed(+b.dataset.v,'preset');};});
+  document.querySelectorAll('#mults button').forEach(function(b){
+    b.onclick=function(){setSpeed(15*(+b.dataset.m),'mult');};});
+  document.querySelectorAll('#spMults button').forEach(function(b){
+    b.onclick=function(){setSpeed(15*(+b.dataset.m),'mult');};});
+  syncSpeed(30);
+
+  var run='idle';
+  var S={
+    idle:{cls:'',txt:'空闲',coord:'39.908120, 116.397455',spd:'0.0',bear:'--',acc:'--',alt:'--',
+      done:'0.00',pct:'0%',eta:'预计 --',main:'开始漫游',icon:'i-play',stop:false,cur:0,rd:0,
+      d:'M56 336 L146 252 L232 238'},
+    running:{cls:'run',txt:'运行中',coord:'39.931204, 116.430188',spd:'15.2',bear:'62',acc:'8',alt:'48',
+      done:'3.20',pct:'42%',eta:'剩余 18 分钟',main:'暂停',icon:'i-pause',stop:true,cur:1,rd:1,
+      d:'M56 336 L146 252 L232 238'},
+    paused:{cls:'pause',txt:'已暂停',coord:'39.931204, 116.430188',spd:'0.0',bear:'62',acc:'8',alt:'48',
+      done:'3.20',pct:'42%',eta:'剩余 18 分钟',main:'继续',icon:'i-play',stop:true,cur:1,rd:1,
+      d:'M56 336 L146 252 L232 238'},
+    done:{cls:'done',txt:'已完成',coord:'39.996120, 116.471380',spd:'0.0',bear:'62',acc:'7',alt:'52',
+      done:'7.62',pct:'100%',eta:'已到达终点',main:'再次开始',icon:'i-play',stop:false,cur:1,rd:1,
+      d:'M56 336 L146 252 L232 238 L322 116'}
+  };
+  function setRun(s){
+    run=s;var v=S[s];
+    document.getElementById('f-main').setAttribute('data-run',s);
+    var lb=document.getElementById('stateTxt');lb.className='statelbl '+(v.cls||'');lb.textContent=v.txt;
+    document.getElementById('tvCoord').textContent=v.coord;
+    document.getElementById('tvSpeed').textContent=v.spd;
+    document.getElementById('tvBear').textContent=v.bear;
+    document.getElementById('tvAcc').textContent=v.acc;
+    document.getElementById('tvAlt').textContent=v.alt;
+    document.getElementById('tvDone').textContent=v.done;
+    document.getElementById('tvPct').textContent=v.pct;
+    document.getElementById('tvEta').textContent=v.eta;
+    document.getElementById('btnMainTxt').textContent=v.main;
+    document.querySelector('#btnMain use').setAttribute('href','#'+v.icon);
+    document.getElementById('btnStop').disabled=!v.stop;
+    document.getElementById('cursor').setAttribute('opacity',v.cur);
+    document.getElementById('routeDone').setAttribute('opacity',v.rd);
+    document.getElementById('routeDone').setAttribute('d',v.d);
+    var p=parseInt(v.pct);
+    document.getElementById('progFill').style.width=p+'%';
+    document.getElementById('progKnob').style.left=p+'%';
+    document.getElementById('liveTag').style.display=(s==='running'||s==='paused')?'inline-block':'none';
+  }
+  setRun('idle');
+  document.getElementById('btnMain').onclick=function(){
+    setRun(run==='idle'?'running':run==='running'?'paused':'running');};
+  document.getElementById('btnStop').onclick=function(){setRun('idle');};
+  document.getElementById('statusrow').onclick=function(){document.getElementById('sdetail').classList.toggle('open');};
+})();
+</script>
+</body>
+</html>

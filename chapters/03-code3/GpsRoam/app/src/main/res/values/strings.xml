@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GPS 漫游</string>
+
+    <!-- 状态名 -->
+    <string name="phase_idle">空闲</string>
+    <string name="phase_ready">已选轨迹</string>
+    <string name="phase_recording">录制中</string>
+    <string name="phase_playing">回放中</string>
+    <string name="phase_paused">已暂停</string>
+
+    <!-- 状态行 -->
+    <string name="line_idle">未运行</string>
+    <string name="line_ready">%1$s · %2$s · %3$s · 均速 %4$s km/h</string>
+    <string name="line_recording">%1$s · %2$d 个点 · %3$s</string>
+    <string name="line_playing">已走 %1$d%% · %2$s / %3$s</string>
+    <string name="line_paused">已暂停 · 已走 %1$d%% · %2$s / %3$s</string>
+
+    <!-- 权限：只在缺的时候出现，齐了就整条隐藏 -->
+    <string name="permission_both_missing">缺两项：「模拟位置」授权 + 「精确定位」权限</string>
+    <string name="permission_mock_missing">还缺「模拟位置」授权：开发者选项 → 选择模拟位置信息应用 → 选中本应用</string>
+    <string name="permission_loc_missing">还缺「精确定位」权限，点这里授予</string>
+    <string name="open_dev_options">去开启</string>
+
+    <!-- 主控区 -->
+    <string name="btn_start_record">开始录制</string>
+    <string name="btn_stop_save">停止并保存</string>
+    <string name="btn_pick_track">选择轨迹回放</string>
+    <string name="btn_start_sim">开始模拟</string>
+    <string name="btn_change_track">重新录制</string>
+    <string name="btn_pause">暂停</string>
+    <string name="btn_resume">继续</string>
+    <string name="btn_stop">停止</string>
+    <string name="btn_library">轨迹库 · %1$d 条</string>
+    <string name="btn_library_empty">轨迹库 · 空</string>
+    <string name="btn_go_record">去录制</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_discard">丢弃</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_delete">删除</string>
+    <string name="btn_rename">重命名</string>
+    <string name="btn_back">返回</string>
+    <string name="spd_1x">1×</string>
+    <string name="spd_2x">2×</string>
+    <string name="spd_5x">5×</string>
+    <string name="spd_10x">10×</string>
+
+    <!-- 轨迹预览 -->
+    <string name="preview_empty">还没有轨迹\n在下面录一段，或从轨迹库选一条</string>
+
+    <!-- 保存命名 -->
+    <string name="dialog_save_title">保存轨迹</string>
+    <string name="dialog_save_hint">给这次记录起个名字</string>
+    <string name="default_track_name">轨迹 %1$s</string>
+
+    <!-- 轨迹库 -->
+    <string name="library_title">轨迹库</string>
+    <string name="library_empty">还没有轨迹。\n回到主屏点「开始录制」，走一段就有了。</string>
+    <string name="track_item_sub">%1$d 个点 · %2$s · %3$s</string>
+    <string name="dialog_rename_hint">新名字</string>
+    <string name="library_long_press_tip">长按可重命名或删除</string>
+
+    <!-- 提示 -->
+    <string name="msg_recording">开始录制，走起来吧</string>
+    <string name="msg_saved">已保存：%1$s</string>
+    <string name="msg_discarded">已丢弃</string>
+    <string name="msg_record_short">点太少（不足 2 个），再走远一点</string>
+    <string name="msg_no_gps">还没收到定位，到空旷处试试</string>
+    <string name="msg_deleted">已删除</string>
+    <string name="msg_renamed">已重命名</string>
+    <string name="msg_delete_confirm">删除后不可恢复，确定删掉这条轨迹？</string>
+    <string name="msg_loaded">已载入，点「开始模拟」</string>
+    <string name="msg_finished">已到达终点</string>
+    <string name="msg_need_mock">还没授权「模拟位置」，先到开发者选项里选中本应用</string>
+    <string name="msg_need_loc">需要「精确定位」权限</string>
+    <string name="msg_service">服务未就绪，稍后再试</string>
+    <string name="msg_no_track">先选一条轨迹</string>
+
+    <!-- 常驻通知 -->
+    <string name="notif_recording">正在录制 · 已记 %1$d 个点</string>
+    <string name="notif_playing">正在回放 · %1$s</string>
+    <string name="notif_paused">已暂停 · %1$s</string>
+    <string name="notif_channel">定位服务</string>
+    <string name="notif_channel_desc">保持录制或回放在后台运行</string>
+</resources>

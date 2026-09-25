@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand">#185FA5</color>
+    <color name="brand_dark">#0C447C</color>
+
+    <!-- 状态色只有三种：录制红 / 回放蓝 / 暂停黄 -->
+    <color name="state_record">#A32D2D</color>
+    <color name="state_play">#185FA5</color>
+    <color name="state_pause">#854F0B</color>
+
+    <color name="text_primary">#2C2C2A</color>
+    <color name="text_secondary">#5F5E5A</color>
+    <color name="text_tertiary">#888780</color>
+
+    <color name="banner_warn">#FAEEDA</color>
+    <color name="banner_warn_text">#633806</color>
+
+    <color name="seg_on">#185FA5</color>
+    <color name="seg_off">#EEF1F5</color>
+    <color name="seg_off_text">#444441</color>
+
+    <color name="preview_bg">#F4F5F7</color>
+    <color name="preview_todo">#B4B2A9</color>
+    <color name="preview_start">#0F6E56</color>
+    <color name="preview_end">#993C1D</color>
+    <color name="preview_hint">#98A2B3</color>
+</resources>

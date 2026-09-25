@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPS 漫游 · UI 视觉方案（高保真原型）</title>
+<style>
+:root{
+  --page:#EBEEF2; --page-card:#FFFFFF; --page-line:#DDE2E9;
+  --page-text:#0F172A; --page-text-2:#5B6675;
+
+  --bg:#F4F6F8; --surface:#FFFFFF; --surface-2:#F0F2F5; --surface-3:#E7EAEF;
+  --line:#E4E8ED; --line-strong:#D3D9E0;
+  --text:#101828; --text-2:#667085; --text-3:#98A2B3;
+  --brand:#1B6EF3; --brand-2:#4C8DFF; --brand-soft:#E8F0FE; --on-brand:#FFFFFF;
+  --ok:#16A34A; --ok-soft:#E7F6EC;
+  --warn:#E08A00; --warn-soft:#FDF3E3;
+  --err:#DC2626; --err-soft:#FDECEC;
+  --map-bg:#E9EEF3; --map-land:#DCEBD7; --map-water:#C8DFF2;
+  --map-road:#FFFFFF; --map-road-edge:#DEE4EB; --map-block:#E2E8EF;
+  --map-label:#8A96A5;
+  --mm-bg:#F1EFE9; --mm-green:#CBE3C0; --mm-water:#A9D3EC; --mm-block:#E6E3DB;
+  --mm-hw:#FDCB8D; --mm-hw-edge:#E9A45A;
+  --mm-road:#FFFFFF; --mm-road-edge:#E5CA90; --mm-road2-edge:#DCD6C8;
+  --mm-rail:#3B82D9; --mm-rail-st:#FFFFFF;
+  --mm-poi:#5B6673; --mm-poibg:#FFFFFF;
+  --jam:#E4564A; --slow:#F2B134; --clear:#3FBF6F;
+  --pin:#FF3B30;
+  --sh-1:0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --sh-2:0 4px 12px rgba(16,24,40,.08), 0 2px 4px rgba(16,24,40,.05);
+  --sh-3:0 -8px 28px rgba(16,24,40,.14);
+}
+[data-theme="dark"]{
+  --page:#07090C; --page-card:#14181F; --page-line:#232A33;
+  --page-text:#E7EAEE; --page-text-2:#98A2B3;
+
+  --bg:#0E1116; --surface:#171B22; --surface-2:#1F242C; --surface-3:#262C35;
+  --line:#2A313B; --line-strong:#39424E;
+  --text:#E7EAEE; --text-2:#98A2B3; --text-3:#6B7480;
+  --brand:#4C8DFF; --brand-2:#7AA9FF; --brand-soft:#152238; --on-brand:#0B1220;
+  --ok:#34C759; --ok-soft:#12291C;
+  --warn:#F5A623; --warn-soft:#2C2113;
+  --err:#FF5A5A; --err-soft:#2E1616;
+  --map-bg:#1A2028; --map-land:#1E2A22; --map-water:#15293B;
+  --map-road:#2C333D; --map-road-edge:#242A33; --map-block:#22282F;
+  --map-label:#5F6B7A;
+  --mm-bg:#161C24; --mm-green:#1E2C22; --mm-water:#132C3E; --mm-block:#1E242E;
+  --mm-hw:#5A4526; --mm-hw-edge:#7A5E33;
+  --mm-road:#2C343F; --mm-road-edge:#3C4653; --mm-road2-edge:#333C47;
+  --mm-rail:#2E6BB8; --mm-rail-st:#1A222C;
+  --mm-poi:#97A2B0; --mm-poibg:#212A34;
+  --jam:#C4443A; --slow:#C58F26; --clear:#2F9B5A;
+  --pin:#FF4A40;
+  --sh-1:0 1px 2px rgba(0,0,0,.4);
+  --sh-2:0 4px 14px rgba(0,0,0,.45);
+  --sh-3:0 -8px 28px rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",Roboto,"Helvetica Neue",sans-serif;
+  background:var(--page); color:var(--page-text);
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* ---------- 外壳 ---------- */
+.topbar{height:56px;display:flex;align-items:center;gap:16px;padding:0 20px;
+  background:var(--page-card);border-bottom:1px solid var(--page-line);position:sticky;top:0;z-index:20}
+.topbar h1{font-size:15px;font-weight:650;letter-spacing:.2px}
+.topbar .sub{font-size:12px;color:var(--page-text-2)}
+.topbar .spacer{flex:1}
+.tbtn{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--page-line);background:transparent;
+  color:var(--page-text);font-size:12.5px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.tbtn:hover{background:var(--bg)}
+.tbtn.on{background:var(--brand);border-color:var(--brand);color:#fff}
+[data-theme="dark"] .tbtn.on{color:var(--on-brand)}
+
+.layout{display:flex;align-items:flex-start;gap:24px;padding:24px 20px 40px}
+.sidenav{width:206px;flex:none;position:sticky;top:80px}
+.sidenav .grp{font-size:11px;color:var(--page-text-2);letter-spacing:.6px;margin:14px 0 6px;padding-left:10px}
+.sidenav .grp:first-child{margin-top:0}
+.sidenav button{width:100%;text-align:left;height:36px;padding:0 10px;border:0;background:transparent;border-radius:8px;
+  color:var(--page-text);font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px}
+.sidenav button:hover{background:var(--page-line)}
+.sidenav button.on{background:var(--brand);color:#fff;font-weight:600}
+[data-theme="dark"] .sidenav button.on{color:var(--on-brand)}
+.sidenav .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.4;flex:none}
+.sidenav button.on .dot{opacity:1}
+
+.stage{flex:1;display:flex;justify-content:center;min-width:0}
+.phone{width:412px;height:915px;flex:none;border-radius:48px;background:#0B0E13;padding:11px;
+  box-shadow:0 24px 60px rgba(16,24,40,.28);transform:scale(var(--ps,1));transform-origin:top center}
+.screen{width:100%;height:100%;border-radius:38px;overflow:hidden;background:var(--bg);
+  position:relative;display:flex;flex-direction:column;color:var(--text)}
+
+/* 状态栏 */
+.statusbar{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;font-size:12.5px;font-weight:600;color:var(--text)}
+.sb-right{display:flex;align-items:center;gap:5px}
+.navbar{height:26px;flex:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+.navbar i{width:108px;height:4px;border-radius:2px;background:var(--line-strong);display:block}
+
+.frames{position:relative;flex:1;min-height:0}
+.frame{position:absolute;inset:0;display:none;flex-direction:column}
+.frame.active{display:flex}
+
+/* ---------- 通用组件 ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.chip{height:26px;padding:0 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;
+  font-size:11.5px;font-weight:600;background:var(--surface-2);color:var(--text-2)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.err{background:var(--err-soft);color:var(--err)}
+.chip.brand{background:var(--brand-soft);color:var(--brand)}
+.seg{display:flex;background:var(--surface-2);border-radius:11px;padding:3px;gap:2px}
+.seg button{flex:1;height:32px;border:0;background:transparent;border-radius:8px;color:var(--text-2);
+  font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--sh-1)}
+[data-theme="dark"] .seg button.on{background:var(--surface-3)}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.s{width:14px;height:14px}
+.ic.l{width:20px;height:20px}
+.ic.fill{fill:currentColor;stroke:none}
+.btn{height:52px;border-radius:14px;border:0;font-size:15px;font-weight:650;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:8px;background:var(--brand);color:#fff}
+[data-theme="dark"] .btn{color:var(--on-brand)}
+.btn.ghost{background:var(--surface-2);color:var(--text-2);font-weight:600}
+.btn.outline{background:transparent;border:1px solid var(--line-strong);color:var(--text)}
+.btn.danger{background:transparent;border:1px solid var(--err);color:var(--err)}
+.btn:disabled{opacity:.38;cursor:default}
+.sqbtn{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.mini{height:34px;padding:0 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);
+  color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;gap:6px}
+.field{height:44px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);
+  display:flex;align-items:center;padding:0 12px;gap:8px}
+.field input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font-size:13.5px;font-family:inherit;outline:none}
+.field input::placeholder{color:var(--text-3)}
+.field:focus-within{border-color:var(--brand);background:var(--surface)}
+.lbl{font-size:11.5px;font-weight:650;color:var(--text-3);letter-spacing:.3px}
+.hint{font-size:11.5px;color:var(--text-3);line-height:1.5}
+.row{display:flex;align-items:center;gap:10px}
+
+/* 滑杆 */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--surface-3)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:var(--brand);border:3px solid var(--surface);box-shadow:var(--sh-1);margin-top:-8px}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--surface-3)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:3px solid var(--surface);border-radius:50%;background:var(--brand)}
+
+/* ---------- 主屏 ---------- */
+.statusband{padding:10px 16px 8px;flex:none}
+.band{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:var(--sh-1)}
+.band.err{background:var(--err-soft);border-color:transparent}
+.band.warn{background:var(--warn-soft);border-color:transparent}
+.band-top{display:flex;align-items:center;gap:6px}
+.band-top .spacer{flex:1}
+.state-pill{height:24px;padding:0 10px;border-radius:999px;font-size:11.5px;font-weight:700;
+  background:var(--surface-2);color:var(--text-2);display:inline-flex;align-items:center;gap:5px}
+.state-pill.run{background:var(--brand-soft);color:var(--brand)}
+.state-pill.pause{background:var(--warn-soft);color:var(--warn)}
+.state-pill.done{background:var(--ok-soft);color:var(--ok)}
+.band-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-strong);
+  font-size:12px;line-height:1.55;color:var(--text-2)}
+.band.open .band-detail{display:block}
+.band.open .chev{transform:rotate(180deg)}
+.chev{transition:transform .18s}
+
+.modebar{padding:2px 16px 10px;flex:none}
+#f-main[data-run="running"] .modebar .seg,
+#f-main[data-run="paused"] .modebar .seg{opacity:.45;pointer-events:none}
+#f-main[data-run="running"] .quick,
+#f-main[data-run="paused"] .quick{opacity:.42;pointer-events:none}
+.mapwrap{flex:1;min-height:0;margin:0 16px;border-radius:18px;overflow:hidden;position:relative;
+  background:var(--map-bg);border:1px solid var(--line)}
+.mapwrap svg{display:block;width:100%;height:100%}
+.mapbtn{position:absolute;width:34px;height:34px;border-radius:11px;background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--sh-1);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.mapbtn.on{background:var(--brand);border-color:var(--brand);color:#fff}
+[data-theme="dark"] .mapbtn.on{color:var(--on-brand)}
+.mb-follow{right:12px;top:12px;width:auto;padding:0 10px;gap:6px;font-size:11.5px;font-weight:700}
+.mb-zoom{right:12px;bottom:60px;display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;height:auto;width:34px}
+.mb-zoom button{width:34px;height:34px;border:0;background:transparent;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mb-zoom button+button{border-top:1px solid var(--line)}
+.mb-loc{right:12px;bottom:14px}
+.mb-add{left:12px;top:12px}
+.crosshair{position:absolute;inset:0;display:none;pointer-events:none}
+.crosshair.show{display:block}
+
+.quick{display:flex;gap:8px;padding:10px 16px 0;flex:none}
+
+.datapanel{margin:10px 16px 0;padding:12px;flex:none}
+.dp-coord{display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.dp-coord .v{font-size:14px;font-weight:600}
+.dp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.dp-cell .k{font-size:10.5px;color:var(--text-3);font-weight:600}
+.dp-cell .v{font-size:15px;font-weight:650;margin-top:2px}
+.dp-cell .u{font-size:10.5px;color:var(--text-3);font-weight:600;margin-left:2px}
+.dp-prog{margin-top:12px}
+.dp-prog .line{height:6px;border-radius:3px;background:var(--surface-3);position:relative;margin-top:6px}
+.dp-prog .fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--brand);width:0;transition:width .3s}
+.dp-prog .knob{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--brand);
+  border:2.5px solid var(--surface);transform:translate(-50%,-50%);left:0;transition:left .3s;box-shadow:var(--sh-1)}
+.dp-prog .meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:6px}
+
+.ctrl{padding:12px 16px 0;flex:none}
+.ctrl-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px}
+.ctrl-head .v{font-size:17px;font-weight:700}
+.presets{display:flex;gap:8px;margin-top:6px}
+.presets button{flex:1;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+  color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.presets button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.actionbar{display:flex;gap:10px;padding:12px 16px 18px;flex:none}
+.actionbar .btn{flex:1}
+.actionbar .stop{flex:0 0 92px}
+
+/* ---------- 弹层 ---------- */
+.scrim{position:absolute;inset:0;background:rgba(9,14,22,.42);opacity:0;pointer-events:none;transition:opacity .22s;z-index:8}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:22px 22px 0 0;z-index:9;
+  box-shadow:var(--sh-3);transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;max-height:88%}
+.sheet.open{transform:translateY(0)}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:8px auto 2px;flex:none}
+.sheet-head{padding:6px 16px 10px;display:flex;align-items:center;gap:10px;flex:none}
+.sheet-head h3{font-size:16px;font-weight:650;flex:1}
+.sheet-body{padding:0 16px 16px;overflow:auto;flex:1}
+.sheet-foot{padding:10px 16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;flex:none;background:var(--surface)}
+.grp-title{font-size:11.5px;font-weight:700;color:var(--text-3);letter-spacing:.4px;margin:16px 0 8px}
+.grp-title:first-child{margin-top:4px}
+.paste-note{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 10px;font-size:11.5px;line-height:1.5;margin-top:8px;display:flex;gap:6px}
+.list-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--surface-2);
+  border:1px solid var(--line);margin-bottom:8px}
+.list-item .ic-box{width:36px;height:36px;border-radius:10px;background:var(--brand-soft);color:var(--brand);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.list-item .t{font-size:13.5px;font-weight:600}
+.list-item .s{font-size:11.5px;color:var(--text-3);margin-top:2px}
+.list-item .spacer{flex:1}
+.setrow{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line)}
+.setrow:last-child{border-bottom:0}
+.setrow .t{font-size:14px}
+.setrow .s{font-size:11.5px;color:var(--text-3);margin-top:2px}
+.setrow .spacer{flex:1}
+.sw{width:42px;height:25px;border-radius:999px;background:var(--line-strong);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:var(--sh-1)}
+.sw.on{background:var(--brand)}
+.sw.on::after{transform:translateX(17px)}
+
+/* ---------- 高德风地图选点 ---------- */
+.pickmap{position:relative;flex:1;min-height:0;overflow:hidden;background:var(--mm-bg)}
+.pickmap>svg{position:absolute;inset:0;width:100%;height:100%}
+.pick-top{position:absolute;left:12px;right:12px;top:10px;display:flex;gap:8px;align-items:center;z-index:3}
+.pick-search{flex:1;min-width:0;height:44px;border-radius:14px;background:var(--surface);box-shadow:var(--sh-2);
+  display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--text-3)}
+.pick-search b{font-weight:400;font-size:13.5px}
+.roundbtn{width:44px;height:44px;border-radius:14px;background:var(--surface);box-shadow:var(--sh-2);
+  display:flex;align-items:center;justify-content:center;color:var(--text);flex:none;cursor:pointer}
+.roundbtn.on{background:var(--brand);color:#fff}
+[data-theme="dark"] .roundbtn.on{color:var(--on-brand)}
+.pick-tools{position:absolute;right:12px;top:132px;display:flex;flex-direction:column;gap:8px;z-index:3}
+.pick-tools .roundbtn{width:38px;height:38px;border-radius:12px}
+.center-pin{position:absolute;left:50%;top:44%;transform:translate(-50%,-100%);z-index:2;pointer-events:none}
+.center-pin .sh{width:26px;height:8px;border-radius:50%;background:rgba(0,0,0,.22);margin:6px auto 0}
+.pick-hint{position:absolute;left:50%;top:calc(44% + 12px);transform:translateX(-50%);z-index:3;
+  background:var(--surface);border-radius:999px;padding:6px 12px;font-size:11.5px;color:var(--text-2);
+  box-shadow:var(--sh-2);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.pick-card{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--surface);
+  border-radius:22px 22px 0 0;box-shadow:var(--sh-3);padding:8px 16px 20px}
+.pick-card .grab{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto 12px}
+.pc-title{font-size:17px;font-weight:700}
+.pc-sub{font-size:12px;color:var(--text-2);margin-top:3px}
+.pc-coord{display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.pc-coord .v{font-size:13px;font-weight:600}
+.pc-acts{display:flex;gap:8px;margin-top:12px}
+.pc-acts .btn{height:46px;font-size:14px}
+.poi-chip{position:absolute;z-index:2;display:flex;align-items:center;gap:4px;background:var(--mm-poibg);
+  border-radius:6px;padding:2px 6px;font-size:9.5px;color:var(--mm-poi);box-shadow:var(--sh-1);white-space:nowrap}
+
+/* ---------- 运行中变速 ---------- */
+.speed-hero{display:flex;align-items:flex-end;gap:8px;margin-top:2px}
+.speed-num{font-size:46px;font-weight:750;line-height:1;letter-spacing:-1.5px}
+.speed-unit{font-size:13px;color:var(--text-3);font-weight:600;padding-bottom:6px}
+.slider-wrap{position:relative;margin-top:16px}
+.bubble{position:absolute;top:-34px;transform:translateX(-50%);background:var(--brand);color:#fff;
+  border-radius:8px;padding:4px 9px;font-size:12.5px;font-weight:700;white-space:nowrap;transition:left .08s}
+[data-theme="dark"] .bubble{color:var(--on-brand)}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-4px;width:8px;height:8px;background:var(--brand);transform:translateX(-50%) rotate(45deg)}
+.eta-cmp{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px;border-radius:14px;background:var(--surface-2)}
+.eta-cmp .col{flex:1}
+.eta-cmp .k{font-size:10.5px;color:var(--text-3);font-weight:650}
+.eta-cmp .v{font-size:15px;font-weight:700;margin-top:2px}
+.eta-cmp .old{color:var(--text-3);text-decoration:line-through}
+.eta-cmp .new{color:var(--brand)}
+.live-tip{display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:10px 12px;border-radius:12px;
+  background:var(--brand-soft);color:var(--brand);font-size:11.5px;line-height:1.55}
+
+/* ---------- 通知 ---------- */
+.notif-shade{position:absolute;inset:0;background:rgba(9,14,22,.35)}
+.notif-panel{position:absolute;left:10px;right:10px;top:10px;background:var(--surface);border-radius:20px;
+  padding:12px;box-shadow:var(--sh-2);border:1px solid var(--line)}
+.notif-card{background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:12px}
+.notif-card+.notif-card{margin-top:10px}
+.notif-top{display:flex;align-items:center;gap:8px}
+.notif-top .app{width:22px;height:22px;border-radius:6px;background:var(--brand);display:flex;align-items:center;justify-content:center;color:#fff}
+[data-theme="dark"] .notif-top .app{color:var(--on-brand)}
+.notif-top .nm{font-size:11.5px;color:var(--text-2);font-weight:600}
+.notif-top .spacer{flex:1}
+.notif-title{font-size:14px;font-weight:650;margin-top:8px}
+.notif-sub{font-size:12px;color:var(--text-2);margin-top:3px;line-height:1.5}
+.notif-acts{display:flex;gap:8px;margin-top:11px}
+.notif-acts button{flex:1;height:36px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);
+  color:var(--text);font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.notif-acts button.stop{border-color:var(--err);color:var(--err)}
+
+/* ---------- 引导 / 空态 / 错误 ---------- */
+.centerpad{flex:1;display:flex;flex-direction:column;padding:0 20px 24px}
+.step{display:flex;gap:12px;padding:14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);margin-bottom:10px}
+.step .num{width:28px;height:28px;border-radius:50%;background:var(--surface-3);color:var(--text-2);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
+.step.act{border-color:var(--brand);background:var(--brand-soft)}
+.step.act .num{background:var(--brand);color:#fff}
+[data-theme="dark"] .step.act .num{color:var(--on-brand)}
+.step.done .num{background:var(--ok);color:#fff}
+.step .t{font-size:13.5px;font-weight:650}
+.step .s{font-size:11.5px;color:var(--text-2);margin-top:3px;line-height:1.5}
+.emptymap{flex:1;margin:0 16px;border-radius:18px;border:2px dashed var(--line-strong);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-3);background:var(--surface)}
+.emptymap .big{width:56px;height:56px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--brand)}
+.skel{flex:1;margin:0 16px;border-radius:18px;background:var(--surface);position:relative;overflow:hidden;border:1px solid var(--line)}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,var(--surface-2) 50%,transparent 80%);
+  animation:sweep 1.4s infinite}
+@keyframes sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--surface-3);border-top-color:var(--brand);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pl 2s ease-out infinite}
+@keyframes pl{0%{transform:scale(.55);opacity:.55}100%{transform:scale(2.6);opacity:0}}
+
+/* ---------- 摇杆手动控制 ---------- */
+.stickpad{position:relative;width:232px;height:232px;margin:0 auto;border-radius:50%;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-2);touch-action:none}
+.stickpad .ring{position:absolute;inset:38px;border-radius:50%;border:1px dashed var(--line-strong);pointer-events:none}
+.stickpad .axis{position:absolute;inset:0;pointer-events:none;color:var(--line-strong)}
+.stickpad .knob{position:absolute;left:50%;top:50%;width:76px;height:76px;border-radius:50%;
+  background:var(--brand);transform:translate(-50%,-50%);box-shadow:var(--sh-2);
+  display:flex;align-items:center;justify-content:center;color:#fff;cursor:grab}
+[data-theme="dark"] .stickpad .knob{color:var(--on-brand)}
+.stickpad .knob:active{cursor:grabbing}
+.stick-read{display:flex;gap:10px;margin-top:20px}
+.stick-read .col{flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:10px 6px}
+.stick-read .k{font-size:10.5px;color:var(--text-3);font-weight:650}
+.stick-read .v{font-size:17px;font-weight:700;margin-top:3px}
+
+/* ---------- 轻提示 ---------- */
+.toast{position:absolute;left:50%;bottom:104px;transform:translate(-50%,10px);z-index:30;
+  background:rgba(17,24,39,.92);color:#fff;font-size:12.5px;font-weight:600;padding:9px 14px;
+  border-radius:10px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 路径绘制 ---------- */
+.drawwrap{position:relative;flex:1;min-height:0;margin:0 16px;border-radius:18px;overflow:hidden;
+  background:var(--map-bg);border:1px solid var(--line);cursor:crosshair;touch-action:none}
+.drawwrap>svg.drawmap{position:absolute;inset:0;width:100%;height:100%;display:block}
+.drawlayer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.dpin{position:absolute;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;
+  background:var(--brand);color:#fff;border:2px solid #fff;box-shadow:var(--sh-1);pointer-events:none}
+.dpin.first{background:var(--ok)}
+.dpin.last{background:var(--err)}
+.dcursor{position:absolute;width:15px;height:15px;border-radius:50%;transform:translate(-50%,-50%);
+  background:var(--brand);border:2.5px solid #fff;box-shadow:var(--sh-1);pointer-events:none;opacity:0}
+.drawbar{display:flex;gap:8px;padding:10px 16px 0;flex:none}
+.drawbar .mini{flex:1;justify-content:center}
+
+/* ---------- 右侧说明 ---------- */
+.notes{width:300px;flex:none;position:sticky;top:80px}
+.notes .card{padding:16px;margin-bottom:14px}
+.notes h3{font-size:13px;font-weight:700;margin-bottom:10px}
+.notes p{font-size:12.5px;line-height:1.75;color:var(--page-text-2)}
+.notes ul{margin:8px 0 0 16px}
+.notes li{font-size:12.5px;line-height:1.75;color:var(--page-text-2);margin-bottom:3px}
+.swatches{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.sw-row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--page-text-2)}
+.sw-box{width:100%;height:24px;border-radius:6px;border:1px solid var(--page-line)}
+.sw-cols{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.sp-row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--page-text-2);padding:5px 0;border-bottom:1px dashed var(--page-line)}
+.sp-row:last-child{border-bottom:0}
+.sp-row b{font-weight:650;color:var(--page-text)}
+.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--page-line);color:var(--page-text-2);font-weight:600}
+@media (max-width:1240px){.notes{display:none}}
+</style>
+</head>
+<body>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-loc" viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4V4z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 012-2h8"/></symbol>
+  <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3l9-16z"/><path d="M12 10v4M12 17.2v.1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.8v14.4L19 12 7 4.8z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.4 6H14a4 4 0 014 4v5.6"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s6-6.1 6-10a6 6 0 10-12 0c0 3.9 6 10 6 10z"/><circle cx="12" cy="11" r="1.8" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-stick" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12l4-4M12 12v-5"/></symbol>
+  <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-1.6 3.5L16 11H5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+  <symbol id="i-paste" viewBox="0 0 24 24"><rect x="8" y="4" width="12" height="5" rx="1.6"/><path d="M16 11v7a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h2"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor" stroke="none"/><rect x="5" y="5" width="3" height="7" rx="1" fill="currentColor" stroke="none"/><rect x="10" y="2.5" width="3" height="9.5" rx="1" fill="currentColor" stroke="none"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 16 12"><path d="M1 4.2a10 10 0 0114 0M3.6 6.8a6.5 6.5 0 018.8 0M6.4 9.4a3 3 0 013.2 0" /><circle cx="8" cy="11.2" r="1.1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-batt" viewBox="0 0 26 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3"/><rect x="2.5" y="2.5" width="14" height="7" rx="1.6" fill="currentColor" stroke="none"/><path d="M23.5 4v4" stroke-width="2.4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/></symbol>
+</svg>
+
+<header class="topbar">
+  <h1>GPS 漫游 · UI 视觉方案</h1>
+  <span class="sub">412 × 915 · 1dp = 1px · 高保真可点原型</span>
+  <span class="spacer"></span>
+  <button class="tbtn" id="themeBtn"><svg class="ic s"><use href="#i-sliders"/></svg><span id="themeTxt">深色</span></button>
+</header>
+
+<div class="layout">
+  <!-- 侧边导航 -->
+  <nav class="sidenav" id="nav">
+    <div class="grp">主流程</div>
+    <button data-go="main" class="on"><span class="dot"></span>主屏 · 空闲</button>
+    <button data-go="main" data-run="running"><span class="dot"></span>主屏 · 运行中</button>
+    <button data-go="main" data-run="paused"><span class="dot"></span>主屏 · 已暂停</button>
+    <button data-go="main" data-run="done"><span class="dot"></span>主屏 · 已完成</button>
+    <div class="grp">状态覆盖</div>
+    <button data-go="onboard"><span class="dot"></span>首次启动引导</button>
+    <button data-go="empty"><span class="dot"></span>空状态</button>
+    <button data-go="loading"><span class="dot"></span>路径规划中</button>
+    <button data-go="error"><span class="dot"></span>错误 · 权限失效</button>
+    <div class="grp">地图与选点</div>
+    <button data-go="pickmap"><span class="dot"></span>地图选点 · 高德风</button>
+    <button data-go="speed"><span class="dot"></span>运行中变速</button>
+    <button data-go="stick"><span class="dot"></span>摇杆手动控制</button>
+    <button data-go="draw"><span class="dot"></span>绘制路径 · 试跑</button>
+    <button data-go="draw" data-sheet="routes"><span class="dot"></span>路线库 · 复用</button>
+    <div class="grp">弹层与子页</div>
+    <button data-go="main" data-sheet="pick"><span class="dot"></span>选点面板 · 坐标</button>
+    <button data-go="main" data-sheet="tune"><span class="dot"></span>调速与拟真</button>
+    <button data-go="main" data-sheet="places"><span class="dot"></span>常用点位</button>
+    <button data-go="main" data-run="done" data-sheet="finish"><span class="dot"></span>到达终点提示</button>
+    <button data-go="settings"><span class="dot"></span>更多设置</button>
+    <button data-go="notif"><span class="dot"></span>常驻通知</button>
+  </nav>
+
+  <!-- 手机 -->
+  <main class="stage">
+    <div class="phone" id="phone">
+      <div class="screen">
+
+        <div class="statusbar">
+          <span class="mono">15:56</span>
+          <span class="sb-right">
+            <svg class="ic" style="width:17px;height:12px"><use href="#i-signal"/></svg>
+            <svg class="ic" style="width:15px;height:12px"><use href="#i-wifi"/></svg>
+            <svg class="ic" style="width:24px;height:12px"><use href="#i-batt"/></svg>
+          </span>
+        </div>
+
+        <div class="frames">
+
+          <!-- ===== 主屏 ===== -->
+          <section class="frame active" id="f-main">
+            <!-- 状态条 -->
+            <div class="statusband">
+              <div class="band" id="band">
+                <div class="band-top">
+                  <span class="chip ok"><svg class="ic s"><use href="#i-shield"/></svg>模拟位置</span>
+                  <span class="chip ok"><svg class="ic s"><use href="#i-loc"/></svg>定位</span>
+                  <span class="spacer"></span>
+                  <span class="state-pill" id="statePill"><span id="stateTxt">空闲</span></span>
+                  <svg class="ic s chev" style="color:var(--text-3)"><use href="#i-chev-d"/></svg>
+                </div>
+                <div class="band-detail" id="bandDetail">
+                  mock provider 已注册：GPS_PROVIDER · 上报 1.0 Hz · 坐标系 WGS-84 · 已运行 00:18:24
+                </div>
+              </div>
+            </div>
+
+            <!-- 模式切换 -->
+            <div class="modebar">
+              <div class="seg" id="modeSeg">
+                <button data-mode="0">定点</button>
+                <button data-mode="1">直线</button>
+                <button data-mode="2" class="on">路线</button>
+                <button data-mode="3">摇杆</button>
+              </div>
+            </div>
+
+            <!-- 地图 -->
+            <div class="mapwrap" id="mapwrap">
+              <svg viewBox="0 0 380 400" preserveAspectRatio="xMidYMid slice">
+                <rect width="380" height="400" fill="var(--map-bg)"/>
+                <path d="M0 300 q60 -30 120 -10 t140 -40 120 30 V400 H0Z" fill="var(--map-land)" opacity=".85"/>
+                <path d="M-10 120 q70 40 120 10 t110 60 170 -10" stroke="var(--map-water)" stroke-width="26" fill="none" stroke-linecap="round"/>
+                <g fill="var(--map-block)">
+                  <rect x="24" y="40" width="70" height="52" rx="4"/><rect x="112" y="30" width="54" height="66" rx="4"/>
+                  <rect x="196" y="52" width="80" height="44" rx="4"/><rect x="300" y="36" width="58" height="60" rx="4"/>
+                  <rect x="30" y="214" width="86" height="46" rx="4"/><rect x="150" y="300" width="70" height="52" rx="4"/>
+                  <rect x="256" y="212" width="92" height="50" rx="4"/><rect x="286" y="304" width="72" height="58" rx="4"/>
+                </g>
+                <g stroke="var(--map-road-edge)" fill="none" stroke-linecap="round">
+                  <path d="M0 176 H380" stroke-width="16"/><path d="M96 0 V400" stroke-width="14"/>
+                  <path d="M252 0 V400" stroke-width="12"/><path d="M0 366 H380" stroke-width="13"/>
+                  <path d="M0 96 L380 150" stroke-width="9"/>
+                </g>
+                <g stroke="var(--map-road)" fill="none" stroke-linecap="round">
+                  <path d="M0 176 H380" stroke-width="11"/><path d="M96 0 V400" stroke-width="9"/>
+                  <path d="M252 0 V400" stroke-width="8"/><path d="M0 366 H380" stroke-width="8"/>
+                  <path d="M0 96 L380 150" stroke-width="5.5"/>
+                </g>
+                <text x="18" y="170" font-size="9" fill="var(--map-label)">建国路</text>
+                <text x="102" y="332" font-size="9" fill="var(--map-label)">朝阳门外大街</text>
+                <text x="18" y="90" font-size="9" fill="var(--map-label)">亮马河</text>
+
+                <!-- 未走路线 -->
+                <path id="routeFull" d="M56 330 L146 250 L232 236 L322 118" fill="none" stroke="none"/>
+                <path id="routeTodo" d="M56 330 L146 250 L232 236 L322 118" stroke="var(--text-3)" stroke-width="5"
+                      fill="none" stroke-dasharray="9 8" stroke-linecap="round" opacity=".85"/>
+                <!-- 已走路线 -->
+                <path id="routeDone" d="M56 330 L146 250 L232 236" stroke="var(--brand)" stroke-width="6"
+                      fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0"/>
+
+                <!-- 起点 -->
+                <g><circle cx="56" cy="330" r="11" fill="var(--ok)" opacity=".18"/>
+                  <circle cx="56" cy="330" r="7.5" fill="var(--ok)" stroke="#fff" stroke-width="2.4"/></g>
+                <!-- 途径点 -->
+                <g><circle cx="146" cy="250" r="6" fill="var(--surface)" stroke="var(--text-2)" stroke-width="2.4"/></g>
+                <!-- 终点 -->
+                <g><circle cx="322" cy="118" r="11" fill="var(--err)" opacity=".18"/>
+                  <circle cx="322" cy="118" r="7.5" fill="var(--err)" stroke="#fff" stroke-width="2.4"/></g>
+
+                <!-- 当前游标 -->
+                <g id="cursor" opacity="0">
+                  <circle class="pulse" cx="232" cy="236" r="9" fill="var(--brand)" opacity=".35"/>
+                  <g id="cursorArrow" transform="rotate(-32 232 236)">
+                    <path d="M232 210 l11 30 -11 -7 -11 7 Z" fill="var(--brand)"/>
+                  </g>
+                  <circle cx="232" cy="236" r="9.5" fill="var(--brand)" stroke="#fff" stroke-width="2.6"/>
+                </g>
+              </svg>
+
+              <div class="mapbtn mb-follow on" id="followBtn"><svg class="ic s"><use href="#i-target"/></svg><span id="followTxt">Follow</span></div>
+              <div class="mapbtn mb-zoom"><button id="zoomIn"><svg class="ic s"><use href="#i-plus"/></svg></button><button id="zoomOut"><svg class="ic s"><use href="#i-minus"/></svg></button></div>
+              <div class="mapbtn mb-loc" id="mapLoc"><svg class="ic"><use href="#i-loc"/></svg></div>
+
+              <svg class="crosshair" id="crosshair" viewBox="0 0 380 400" preserveAspectRatio="none">
+                <path d="M190 0 V400 M0 200 H380" stroke="var(--brand)" stroke-width="1" stroke-dasharray="6 6"/>
+                <circle cx="190" cy="200" r="26" fill="none" stroke="var(--brand)" stroke-width="1.5"/>
+              </svg>
+            </div>
+
+            <!-- 快捷入口 -->
+            <div class="quick">
+              <button class="mini" data-open="places"><svg class="ic s"><use href="#i-book"/></svg>常用点位</button>
+              <button class="mini" data-go="settings"><svg class="ic s"><use href="#i-file"/></svg>GPX</button>
+              <button class="mini" data-go="settings"><svg class="ic s"><use href="#i-sliders"/></svg>设置</button>
+            </div>
+
+            <!-- 数据面板 -->
+            <div class="card datapanel">
+              <div class="dp-coord">
+                <svg class="ic s" style="color:var(--text-3)"><use href="#i-pin"/></svg>
+                <span class="v mono" id="tvCoord">39.908120, 116.397455</span>
+                <span class="spacer" style="flex:1"></span>
+                <button class="mini" data-copy style="height:28px;padding:0 8px"><svg class="ic s"><use href="#i-copy"/></svg>复制</button>
+              </div>
+              <div class="dp-grid">
+                <div class="dp-cell"><div class="k">速度</div><div class="v mono"><span id="tvSpeed">0.0</span><span class="u">km/h</span></div></div>
+                <div class="dp-cell"><div class="k">航向</div><div class="v mono"><span id="tvBear">--</span><span class="u">°</span></div></div>
+                <div class="dp-cell"><div class="k">精度</div><div class="v mono"><span id="tvAcc">--</span><span class="u">m</span></div></div>
+                <div class="dp-cell"><div class="k">海拔</div><div class="v mono"><span id="tvAlt">--</span><span class="u">m</span></div></div>
+              </div>
+              <div class="dp-prog">
+                <div class="row" style="justify-content:space-between">
+                  <span class="lbl">已走 <b class="mono" id="tvDone" style="color:var(--text)">0.00</b> / <span class="mono" id="tvTotal">7.62</span> km</span>
+                  <span class="lbl" id="tvEta">预计 --</span>
+                </div>
+                <div class="line"><div class="fill" id="progFill"></div><div class="knob" id="progKnob"></div></div>
+                <div class="meta"><span>起点 国贸</span><span id="tvPct">0%</span><span>终点 望京 SOHO</span></div>
+              </div>
+            </div>
+
+            <!-- 控制区 -->
+            <div class="ctrl">
+              <div class="ctrl-head">
+                <span class="lbl">移动速度<span class="tag" id="liveTag" style="display:none;margin-left:6px;background:var(--brand-soft);color:var(--brand)">实时生效</span></span>
+                <span class="v mono"><span id="tvSpdSet">30</span><span style="font-size:11px;color:var(--text-3)"> km/h</span></span>
+              </div>
+              <input type="range" id="spdRange" min="1" max="120" value="30">
+              <div class="presets" id="presets">
+                <button data-v="5">步行 5</button>
+                <button data-v="15">骑行 15</button>
+                <button data-v="60">车行 60</button>
+              </div>
+              <div class="presets" id="mults" style="margin-top:8px">
+                <button data-m="1">倍速 1×</button>
+                <button data-m="2" class="on">2×</button>
+                <button data-m="5">5×</button>
+              </div>
+            </div>
+
+            <!-- 主操作 -->
+            <div class="actionbar">
+              <button class="btn" id="btnMain"><svg class="ic"><use href="#i-play"/></svg><span id="btnMainTxt">开始漫游</span></button>
+              <button class="btn outline stop" id="btnStop" disabled><svg class="ic s"><use href="#i-stop"/></svg>停止</button>
+            </div>
+
+            <div class="navbar"><i></i></div>
+
+            <!-- 遮罩与弹层 -->
+            <div class="scrim" id="scrim"></div>
+
+            <!-- 选点面板 -->
+            <div class="sheet" id="sh-pick">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>选择位置</h3>
+                <button class="mini" style="border:0;background:transparent" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="grp-title">坐标系</div>
+                <div class="seg" id="crdSeg">
+                  <button>WGS-84</button><button class="on">GCJ-02</button><button>BD-09</button>
+                </div>
+                <div class="paste-note"><svg class="ic s" style="margin-top:1px"><use href="#i-warn"/></svg>
+                  <span>从地图 App 复制的坐标通常是 GCJ-02。选错坐标系，落点会偏移数百米。</span></div>
+
+                <div class="grp-title">经纬度</div>
+                <div class="row">
+                  <div class="field" style="flex:1"><input class="mono" value="39.908120" inputmode="decimal"></div>
+                  <div class="field" style="flex:1"><input class="mono" value="116.397455" inputmode="decimal"></div>
+                </div>
+                <button class="mini" style="margin-top:8px"><svg class="ic s"><use href="#i-paste"/></svg>从剪贴板粘贴</button>
+
+                <div class="grp-title">地址搜索</div>
+                <div class="field"><svg class="ic s" style="color:var(--text-3)"><use href="#i-search"/></svg><input placeholder="搜索地点，如「望京 SOHO」"></div>
+
+                <div class="grp-title">快捷方式</div>
+                <button class="mini" style="width:100%;height:46px;justify-content:flex-start"><svg class="ic"><use href="#i-loc"/></svg>以当前位置为起点</button>
+                <button class="mini" style="width:100%;height:46px;justify-content:flex-start;margin-top:8px" id="btnCross"><svg class="ic"><use href="#i-target"/></svg>在地图上选择（十字准星）</button>
+              </div>
+              <div class="sheet-foot">
+                <button class="btn ghost" style="flex:0 0 110px" data-close>取消</button>
+                <button class="btn" style="flex:1" data-close>确定</button>
+              </div>
+            </div>
+
+            <!-- 调速与拟真 -->
+            <div class="sheet" id="sh-tune">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>调速与拟真</h3>
+                <button class="mini" style="border:0;background:transparent" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="grp-title">速度抖动幅度</div>
+                <div class="row"><input type="range" min="0" max="30" value="12" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="mono" style="font-size:12.5px;width:44px;text-align:right">12%</span></div>
+                <div class="hint" style="margin-top:2px">真实 GPS 速度不会恒定，抖动后更难被识别。</div>
+
+                <div class="grp-title">精度波动范围</div>
+                <div class="row"><input type="range" min="1" max="30" value="8" oninput="this.nextElementSibling.textContent='±'+this.value+' m'"><span class="mono" style="font-size:12.5px;width:44px;text-align:right">±8 m</span></div>
+
+                <div class="grp-title">上报频率</div>
+                <div class="seg"><button>0.5 Hz</button><button class="on">1 Hz</button><button>2 Hz</button></div>
+                <div class="paste-note"><svg class="ic s" style="margin-top:1px"><use href="#i-warn"/></svg><span>偏离 1 Hz 会让轨迹不像真实 GPS，一般不建议改动。</span></div>
+
+                <div class="grp-title">海拔</div>
+                <div class="seg"><button class="on">固定值</button><button>随机</button></div>
+
+                <div class="grp-title">行程方式</div>
+                <div class="seg"><button class="on">单程</button><button>循环</button><button>往返</button></div>
+              </div>
+              <div class="sheet-foot">
+                <button class="btn" style="flex:1" data-close>完成</button>
+              </div>
+            </div>
+
+            <!-- 常用点位 -->
+            <div class="sheet" id="sh-places">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>常用点位</h3>
+                <span class="spacer" style="flex:1"></span>
+                <button class="mini" data-close><svg class="ic s"><use href="#i-plus"/></svg>新增</button>
+                <button class="mini" style="border:0;background:transparent" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="list-item">
+                  <span class="ic-box"><svg class="ic"><use href="#i-pin"/></svg></span>
+                  <span><span class="t">望京 SOHO</span><span class="s mono">39.99612, 116.47138 · 距您 8.4 km</span></span>
+                  <span class="spacer"></span>
+                  <svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                </div>
+                <div class="list-item">
+                  <span class="ic-box"><svg class="ic"><use href="#i-pin"/></svg></span>
+                  <span><span class="t">国贸三期</span><span class="s mono">39.90812, 116.46122 · 距您 1.2 km</span></span>
+                  <span class="spacer"></span>
+                  <svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                </div>
+                <div class="list-item">
+                  <span class="ic-box"><svg class="ic"><use href="#i-pin"/></svg></span>
+                  <span><span class="t">首都机场 T3</span><span class="s mono">40.07990, 116.60310 · 距您 21.7 km</span></span>
+                  <span class="spacer"></span>
+                  <svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                </div>
+                <div class="hint" style="margin-top:10px">点击载入为起点；长按可重命名、删除或排序。</div>
+              </div>
+              <div class="sheet-foot">
+                <button class="btn ghost" style="flex:1" data-close>关闭</button>
+              </div>
+            </div>
+
+            <!-- 到达终点 -->
+            <div class="sheet" id="sh-finish">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>已到达终点</h3>
+                <button class="mini" style="border:0;background:transparent" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="list-item" style="background:var(--ok-soft);border-color:transparent">
+                  <span class="ic-box" style="background:transparent;color:var(--ok)"><svg class="ic l"><use href="#i-check"/></svg></span>
+                  <span><span class="t">望京 SOHO</span><span class="s mono">39.996120, 116.471380</span></span>
+                </div>
+                <div class="dp-grid" style="margin-top:6px">
+                  <div class="dp-cell"><div class="k">总里程</div><div class="v mono">7.62<span class="u">km</span></div></div>
+                  <div class="dp-cell"><div class="k">用时</div><div class="v mono">30:29</div></div>
+                  <div class="dp-cell"><div class="k">均速</div><div class="v mono">15.0<span class="u">km/h</span></div></div>
+                  <div class="dp-cell"><div class="k">轨迹点</div><div class="v mono">4</div></div>
+                </div>
+                <div class="grp-title">接下来</div>
+                <div class="seg"><button class="on">结束并保留路线</button><button>循环再来一次</button></div>
+                <div class="live-tip" style="margin-top:12px">
+                  <svg class="ic s" style="margin-top:1px"><use href="#i-check"/></svg>
+                  <span>选择「结束」会停掉注入、把定位交还系统，路线仍保留在主屏可再次开始。选择「循环」则立刻从起点重新推进。</span>
+                </div>
+              </div>
+              <div class="sheet-foot">
+                <button class="btn" style="flex:1" data-close>完成</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== 摇杆手动控制 ===== -->
+          <section class="frame" id="f-stick">
+            <div class="statusband">
+              <div class="band">
+                <div class="band-top">
+                  <span class="chip ok"><svg class="ic s"><use href="#i-shield"/></svg>模拟位置</span>
+                  <span class="chip ok"><svg class="ic s"><use href="#i-loc"/></svg>定位</span>
+                  <span class="spacer"></span>
+                  <span class="state-pill run">运行中</span>
+                </div>
+              </div>
+            </div>
+            <div class="modebar">
+              <div class="seg"><button>定点</button><button>直线</button><button>路线</button><button class="on">摇杆</button></div>
+            </div>
+            <div class="centerpad" style="justify-content:center;padding-top:6px">
+              <div class="stickpad" id="stickPad">
+                <svg class="ic axis" style="width:100%;height:100%" viewBox="0 0 232 232">
+                  <path d="M116 26 V206 M26 116 H206" stroke="currentColor" stroke-width="1" stroke-dasharray="4 6"/>
+                </svg>
+                <span class="ring"></span>
+                <span class="knob" id="stickKnob"><svg class="ic l"><use href="#i-stick"/></svg></span>
+              </div>
+              <div class="stick-read">
+                <div class="col"><div class="k">航向</div><div class="v mono"><span id="stickBear">--</span>°</div></div>
+                <div class="col"><div class="k">速度</div><div class="v mono"><span id="stickSpd">0.0</span></div></div>
+                <div class="col"><div class="k">已走</div><div class="v mono">1.24</div></div>
+              </div>
+              <div class="hint" style="text-align:center;margin-top:14px;padding:0 10px">
+                拖动摇杆手动控制方向与速度；推得越远越快，松开即停止推进。适合边走边看效果的临时调整。
+              </div>
+            </div>
+            <div class="actionbar">
+              <button class="btn" style="flex:1"><svg class="ic s"><use href="#i-pause"/></svg>暂停</button>
+              <button class="btn danger stop" style="flex:0 0 92px"><svg class="ic s"><use href="#i-stop"/></svg>停止</button>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 绘制路径 ===== -->
+          <section class="frame" id="f-draw">
+            <div class="row" style="padding:6px 16px 10px;gap:8px">
+              <button class="mini" style="border:0;background:transparent" data-go="main"><svg class="ic"><use href="#i-chev-l"/></svg></button>
+              <span style="font-size:17px;font-weight:700;flex:1">绘制路径</span>
+              <span class="chip brand" id="drawCount">0 个点</span>
+            </div>
+
+            <div class="drawwrap" id="drawWrap">
+              <svg class="drawmap" viewBox="0 0 412 620" preserveAspectRatio="xMidYMid slice">
+                <rect width="412" height="620" fill="var(--mm-bg)" />
+                <polygon points="12,470 150,442 196,600 34,620" fill="var(--mm-green)" />
+                <polygon points="286,40 412,22 412,180 306,200" fill="var(--mm-green)" />
+                <path d="M-20 80 C 70 150, 18 280, 96 382 S 54 560, 128 640" stroke="var(--mm-water)" stroke-width="26" fill="none" stroke-linecap="round" />
+                <g fill="var(--mm-block)">
+                  <rect x="150" y="90" width="58" height="44" rx="3" /><rect x="222" y="74" width="46" height="60" rx="3" />
+                  <rect x="44" y="200" width="62" height="46" rx="3" /><rect x="286" y="230" width="66" height="42" rx="3" />
+                  <rect x="196" y="320" width="72" height="46" rx="3" /><rect x="238" y="440" width="70" height="52" rx="3" />
+                </g>
+                <path d="M-20 460 L 190 300 L 300 210 L 432 180" stroke="var(--mm-hw-edge)" stroke-width="20" fill="none" stroke-linecap="round" />
+                <path d="M-20 460 L 190 300 L 300 210 L 432 180" stroke="var(--mm-hw)" stroke-width="14" fill="none" stroke-linecap="round" />
+                <g stroke-linecap="round" fill="none">
+                  <path d="M-20 250 L 432 290" stroke="var(--mm-road-edge)" stroke-width="19" />
+                  <path d="M-20 250 L 432 290" stroke="var(--mm-road)" stroke-width="13" />
+                  <path d="M258 -20 L 236 620" stroke="var(--mm-road-edge)" stroke-width="17" />
+                  <path d="M258 -20 L 236 620" stroke="var(--mm-road)" stroke-width="11" />
+                  <path d="M-20 540 L 432 500" stroke="var(--mm-road2-edge)" stroke-width="11" />
+                  <path d="M-20 540 L 432 500" stroke="var(--mm-road)" stroke-width="7" />
+                </g>
+                <text x="24" y="472" font-size="9" fill="var(--mm-poi)">机场高速</text>
+                <text x="282" y="212" font-size="9" fill="var(--mm-poi)">阜通东大街</text>
+              </svg>
+              <svg class="drawlayer" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <polyline id="drawLine" points="" fill="none" stroke="var(--brand)" stroke-width="3"
+                  vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <div id="drawPins"></div>
+              <div class="dcursor" id="drawCursor"></div>
+              <div class="pick-hint" style="top:12px" id="drawHint">
+                <svg class="ic s"><use href="#i-plus"/></svg>点击地图依次添加落点，至少 2 个
+              </div>
+            </div>
+
+            <div class="drawbar">
+              <button class="mini" id="drawUndo"><svg class="ic s"><use href="#i-chev-l"/></svg>撤销</button>
+              <button class="mini" id="drawClear"><svg class="ic s"><use href="#i-trash"/></svg>清空</button>
+              <button class="mini" data-open="routes"><svg class="ic s"><use href="#i-book"/></svg>路线库</button>
+            </div>
+
+            <div class="card" style="margin:10px 16px 0;padding:12px;flex:none">
+              <div class="dp-grid">
+                <div class="dp-cell"><div class="k">落点</div><div class="v mono"><span id="dvPts">0</span><span class="u">个</span></div></div>
+                <div class="dp-cell"><div class="k">总里程</div><div class="v mono"><span id="dvKm">0.00</span><span class="u">km</span></div></div>
+                <div class="dp-cell"><div class="k">预计用时</div><div class="v mono"><span id="dvEta">--</span></div></div>
+                <div class="dp-cell"><div class="k">状态</div><div class="v" id="dvState" style="font-size:13px;color:var(--text-3)">未验证</div></div>
+              </div>
+            </div>
+
+            <div class="actionbar">
+              <button class="btn outline" style="flex:1" id="drawTest"><svg class="ic s"><use href="#i-play"/></svg>试跑一遍</button>
+              <button class="btn" style="flex:1" id="drawSave"><svg class="ic s"><use href="#i-check"/></svg>保存路线</button>
+            </div>
+            <div class="navbar"><i></i></div>
+
+            <div class="scrim" id="drawScrim"></div>
+
+            <!-- 路线库 -->
+            <div class="sheet" id="sh-routes">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>路线库</h3>
+                <span class="spacer" style="flex:1"></span>
+                <button class="mini" style="border:0;background:transparent" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div id="routeList"></div>
+                <div class="hint" style="margin-top:10px">路线只保存在本机，不上传。点「载入」会把轨迹还原到绘制页，可直接复跑或继续微调。</div>
+              </div>
+              <div class="sheet-foot">
+                <button class="btn ghost" style="flex:1" data-close>关闭</button>
+              </div>
+            </div>
+
+            <!-- 保存命名 -->
+            <div class="sheet" id="sh-savename">
+              <div class="grab"></div>
+              <div class="sheet-head">
+                <h3>保存路线</h3>
+                <button class="mini" style="border:0;background:transparent" data-close><svg class="ic"><use href="#i-close"/></svg></button>
+              </div>
+              <div class="sheet-body">
+                <div class="grp-title">路线名称</div>
+                <div class="field"><input id="saveName" placeholder="如 国贸 → 望京 SOHO"></div>
+                <div class="grp-title">概要</div>
+                <div class="dp-grid">
+                  <div class="dp-cell"><div class="k">落点</div><div class="v mono"><span id="svPts">0</span><span class="u">个</span></div></div>
+                  <div class="dp-cell"><div class="k">总里程</div><div class="v mono"><span id="svKm">0.00</span><span class="u">km</span></div></div>
+                </div>
+                <div class="live-tip" style="margin-top:12px">
+                  <svg class="ic s" style="margin-top:1px"><use href="#i-check"/></svg>
+                  <span>建议先「试跑一遍」确认轨迹无误再保存，避免存下一条走不通的路线。</span>
+                </div>
+              </div>
+              <div class="sheet-foot">
+                <button class="btn ghost" style="flex:0 0 110px" data-close>取消</button>
+                <button class="btn" style="flex:1" id="saveConfirm">保存</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== 首次启动引导 ===== -->
+          <section class="frame" id="f-onboard">
+            <div class="statusband">
+              <div class="band warn">
+                <div class="band-top">
+                  <span class="chip warn"><svg class="ic s"><use href="#i-warn"/></svg>权限未就绪</span>
+                  <span class="spacer"></span>
+                  <span class="state-pill">待完成 2 / 3</span>
+                </div>
+              </div>
+            </div>
+            <div class="centerpad" style="justify-content:flex-start;padding-top:8px">
+              <div class="step done">
+                <span class="num"><svg class="ic s" style="stroke-width:2.6"><use href="#i-check"/></svg></span>
+                <span><span class="t">授予定位权限</span><span class="s">用于读取当前位置作为起点。</span></span>
+              </div>
+              <div class="step act">
+                <span class="num">2</span>
+                <span><span class="t">选择模拟位置信息应用</span><span class="s">开发者选项 → 选择模拟位置信息应用 → 选中「GPS 漫游」。</span></span>
+              </div>
+              <div class="step">
+                <span class="num">3</span>
+                <span><span class="t">开启位置服务</span><span class="s">系统定位开关需保持开启，否则写入的坐标不会被采用。</span></span>
+              </div>
+              <div style="flex:1"></div>
+              <button class="btn" style="width:100%">前往开发者选项</button>
+              <div class="hint" style="text-align:center;margin-top:10px">分步引导，不在首屏直接报错。</div>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 空状态 ===== -->
+          <section class="frame" id="f-empty">
+            <div class="statusband">
+              <div class="band">
+                <div class="band-top">
+                  <span class="chip ok"><svg class="ic s"><use href="#i-shield"/></svg>模拟位置</span>
+                  <span class="chip ok"><svg class="ic s"><use href="#i-loc"/></svg>定位</span>
+                  <span class="spacer"></span>
+                  <span class="state-pill">空闲</span>
+                </div>
+              </div>
+            </div>
+            <div class="modebar">
+              <div class="seg"><button class="on">定点</button><button>直线</button><button>路线</button><button>摇杆</button></div>
+            </div>
+            <div class="emptymap">
+              <span class="big"><svg class="ic l"><use href="#i-plus"/></svg></span>
+              <span style="font-size:13.5px;font-weight:600">长按地图添加起点</span>
+              <span style="font-size:11.5px">或从下方「常用点位」载入一个位置</span>
+            </div>
+            <div class="quick" style="padding-bottom:14px">
+              <button class="mini" style="flex:1;justify-content:center"><svg class="ic s"><use href="#i-book"/></svg>常用点位</button>
+              <button class="mini" style="flex:1;justify-content:center"><svg class="ic s"><use href="#i-file"/></svg>导入 GPX</button>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 加载态 ===== -->
+          <section class="frame" id="f-loading">
+            <div class="statusband">
+              <div class="band">
+                <div class="band-top">
+                  <span class="chip ok"><svg class="ic s"><use href="#i-shield"/></svg>模拟位置</span>
+                  <span class="chip ok"><svg class="ic s"><use href="#i-loc"/></svg>定位</span>
+                  <span class="spacer"></span>
+                  <span class="state-pill">规划中</span>
+                </div>
+              </div>
+            </div>
+            <div class="modebar">
+              <div class="seg"><button>定点</button><button>直线</button><button class="on">路线</button><button>摇杆</button></div>
+            </div>
+            <div class="skel">
+              <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;
+                background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:10px 16px;box-shadow:var(--sh-2)">
+                <span class="spin"></span><span style="font-size:12.5px;font-weight:600">正在规划路线…</span>
+              </div>
+            </div>
+            <div class="card datapanel" style="opacity:.55">
+              <div class="dp-coord"><svg class="ic s" style="color:var(--text-3)"><use href="#i-route"/></svg>
+                <span class="v mono">国贸 → 望京 SOHO</span></div>
+              <div class="dp-prog"><div class="row" style="justify-content:space-between"><span class="lbl">总距离 计算中</span></div>
+                <div class="line"><div class="fill" style="width:38%"></div></div></div>
+            </div>
+            <div class="actionbar">
+              <button class="btn ghost" style="flex:1">取消</button>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 错误态 ===== -->
+          <section class="frame" id="f-error">
+            <div class="statusband">
+              <div class="band err open">
+                <div class="band-top">
+                  <span class="chip err"><svg class="ic s"><use href="#i-warn"/></svg>模拟位置未授权</span>
+                  <span class="spacer"></span>
+                  <span class="state-pill" style="background:var(--err);color:#fff">已停止</span>
+                  <svg class="ic s chev" style="transform:rotate(180deg);color:var(--err)"><use href="#i-chev-d"/></svg>
+                </div>
+                <div class="band-detail" style="display:block;border-color:var(--err);color:var(--err)">
+                  运行中检测到模拟位置权限被撤销，已自动停止注入。<br>错误码：MOCK_PERMISSION_REVOKED
+                </div>
+              </div>
+            </div>
+            <div class="modebar">
+              <div class="seg"><button>定点</button><button>直线</button><button class="on">路线</button><button>摇杆</button></div>
+            </div>
+            <div class="mapwrap" style="opacity:.5">
+              <svg viewBox="0 0 380 400" preserveAspectRatio="xMidYMid slice">
+                <rect width="380" height="400" fill="var(--map-bg)"/>
+                <g stroke="var(--map-road-edge)" fill="none" stroke-linecap="round">
+                  <path d="M0 176 H380" stroke-width="16"/><path d="M96 0 V400" stroke-width="14"/>
+                  <path d="M252 0 V400" stroke-width="12"/><path d="M0 366 H380" stroke-width="13"/></g>
+                <g stroke="var(--map-road)" fill="none" stroke-linecap="round">
+                  <path d="M0 176 H380" stroke-width="11"/><path d="M96 0 V400" stroke-width="9"/>
+                  <path d="M252 0 V400" stroke-width="8"/><path d="M0 366 H380" stroke-width="8"/></g>
+                <path d="M56 330 L146 250 L232 236 L322 118" stroke="var(--text-3)" stroke-width="5" fill="none" stroke-dasharray="9 8" opacity=".7"/>
+                <circle cx="56" cy="330" r="7.5" fill="var(--ok)" stroke="#fff" stroke-width="2.4"/>
+                <circle cx="322" cy="118" r="7.5" fill="var(--err)" stroke="#fff" stroke-width="2.4"/>
+                <g opacity=".9"><circle cx="232" cy="236" r="9.5" fill="var(--text-3)" stroke="#fff" stroke-width="2.6"/></g>
+              </svg>
+              <div class="mapbtn mb-loc" style="opacity:.5"><svg class="ic"><use href="#i-loc"/></svg></div>
+            </div>
+            <div class="quick">
+              <button class="mini" style="flex:1;justify-content:center;color:var(--err)"><svg class="ic s"><use href="#i-shield"/></svg>重新授权</button>
+              <button class="mini" style="flex:1;justify-content:center">查看帮助</button>
+            </div>
+            <div class="card datapanel" style="opacity:.6">
+              <div class="dp-coord"><span class="v mono" style="color:var(--text-3)">已停止在 39.931204, 116.430188</span></div>
+              <div class="dp-grid">
+                <div class="dp-cell"><div class="k">速度</div><div class="v mono">0.0<span class="u">km/h</span></div></div>
+                <div class="dp-cell"><div class="k">航向</div><div class="v mono">--<span class="u">°</span></div></div>
+                <div class="dp-cell"><div class="k">精度</div><div class="v mono">--<span class="u">m</span></div></div>
+                <div class="dp-cell"><div class="k">海拔</div><div class="v mono">--<span class="u">m</span></div></div>
+              </div>
+            </div>
+            <div class="actionbar">
+              <button class="btn" style="flex:1;background:var(--surface-2);color:var(--text-2)"><svg class="ic s"><use href="#i-route"/></svg>路线已保留</button>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 地图选点（高德风） ===== -->
+          <section class="frame" id="f-pickmap">
+            <div class="pickmap">
+              <svg viewBox="0 0 412 760" preserveAspectRatio="xMidYMid slice">
+                <rect width="412" height="760" fill="var(--mm-bg)"/>
+
+                <!-- 绿地 / 公园 -->
+                <polygon points="10,640 140,614 186,742 30,770" fill="var(--mm-green)"/>
+                <polygon points="286,60 412,42 412,196 306,214" fill="var(--mm-green)"/>
+                <text x="66" y="700" font-size="9" fill="var(--mm-poi)" opacity=".8">朝阳公园</text>
+
+                <!-- 水系 -->
+                <path d="M-20 96 C 70 168, 18 300, 96 402 S 54 618, 128 786" stroke="var(--mm-water)" stroke-width="28" fill="none" stroke-linecap="round"/>
+                <text x="20" y="470" font-size="9" fill="var(--mm-poi)" opacity=".75">亮马河</text>
+
+                <!-- 建筑块 -->
+                <g fill="var(--mm-block)">
+                  <rect x="150" y="96" width="58" height="44" rx="3"/><rect x="222" y="80" width="46" height="60" rx="3"/>
+                  <rect x="150" y="164" width="52" height="38" rx="3"/><rect x="216" y="160" width="52" height="52" rx="3"/>
+                  <rect x="40" y="196" width="62" height="46" rx="3"/><rect x="286" y="228" width="66" height="42" rx="3"/>
+                  <rect x="300" y="300" width="58" height="50" rx="3"/><rect x="196" y="330" width="72" height="46" rx="3"/>
+                  <rect x="240" y="556" width="70" height="52" rx="3"/><rect x="330" y="530" width="62" height="46" rx="3"/>
+                  <rect x="150" y="470" width="56" height="44" rx="3"/>
+                </g>
+
+                <!-- 高速 -->
+                <path d="M-20 546 L 196 356 L 300 250 L 432 214" stroke="var(--mm-hw-edge)" stroke-width="22" fill="none" stroke-linecap="round"/>
+                <path d="M-20 546 L 196 356 L 300 250 L 432 214" stroke="var(--mm-hw)" stroke-width="16" fill="none" stroke-linecap="round"/>
+                <text x="24" y="556" font-size="9" fill="var(--mm-poi)">机场高速</text>
+
+                <!-- 主干道 -->
+                <g stroke-linecap="round" fill="none">
+                  <path d="M-20 268 L 432 312" stroke="var(--mm-road-edge)" stroke-width="21"/>
+                  <path d="M-20 268 L 432 312" stroke="var(--mm-road)" stroke-width="15"/>
+                  <path d="M262 -20 L 240 786" stroke="var(--mm-road-edge)" stroke-width="19"/>
+                  <path d="M262 -20 L 240 786" stroke="var(--mm-road)" stroke-width="13"/>
+                </g>
+                <text x="300" y="252" font-size="9" fill="var(--mm-poi)" transform="rotate(6 300 252)">阜通东大街</text>
+                <text x="272" y="150" font-size="9" fill="var(--mm-poi)">京密路</text>
+
+                <!-- 路况（开） -->
+                <g stroke-linecap="round" fill="none" opacity=".92">
+                  <path d="M-20 268 L 120 281" stroke="var(--jam)" stroke-width="6"/>
+                  <path d="M120 281 L 250 295" stroke="var(--slow)" stroke-width="6"/>
+                  <path d="M250 295 L 432 312" stroke="var(--clear)" stroke-width="6"/>
+                  <path d="M258 120 L 252 300" stroke="var(--slow)" stroke-width="5"/>
+                  <path d="M252 300 L 244 520" stroke="var(--jam)" stroke-width="5"/>
+                </g>
+
+                <!-- 次干道 / 支路 -->
+                <g stroke-linecap="round" fill="none">
+                  <path d="M-20 640 L 432 586" stroke="var(--mm-road2-edge)" stroke-width="12"/>
+                  <path d="M-20 640 L 432 586" stroke="var(--mm-road)" stroke-width="8"/>
+                  <path d="M118 -20 L 140 786" stroke="var(--mm-road2-edge)" stroke-width="10"/>
+                  <path d="M118 -20 L 140 786" stroke="var(--mm-road)" stroke-width="6"/>
+                  <g stroke="var(--mm-road)" stroke-width="4" opacity=".95">
+                    <path d="M-20 396 L 432 424"/><path d="M-20 176 L 432 200"/><path d="M-20 726 L 432 700"/>
+                    <path d="M60 -20 L 44 786"/><path d="M330 -20 L 352 786"/><path d="M186 330 L 196 786"/>
+                  </g>
+                </g>
+
+                <!-- 地铁 14 号线 -->
+                <path d="M52 726 L 168 560 L 286 452 L 392 352" stroke="var(--mm-rail)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                <g fill="var(--mm-rail-st)" stroke="var(--mm-rail)" stroke-width="2.6">
+                  <circle cx="52" cy="726" r="4"/><circle cx="168" cy="560" r="4"/><circle cx="286" cy="452" r="4"/><circle cx="392" cy="352" r="4"/>
+                </g>
+                <text x="176" y="548" font-size="9" fill="var(--mm-rail)">阜通</text>
+              </svg>
+
+              <!-- 顶部搜索 -->
+              <div class="pick-top">
+                <div class="roundbtn" data-go="main"><svg class="ic"><use href="#i-chev-l"/></svg></div>
+                <div class="pick-search"><svg class="ic s"><use href="#i-search"/></svg><b>搜索地点、公交、地铁</b></div>
+                <div class="roundbtn"><svg class="ic"><use href="#i-book"/></svg></div>
+              </div>
+
+              <!-- 右侧工具 -->
+              <div class="pick-tools">
+                <div class="roundbtn on" data-tg><svg class="ic s"><use href="#i-route"/></svg></div>
+                <div class="roundbtn" data-tg><svg class="ic s"><use href="#i-sliders"/></svg></div>
+                <div class="roundbtn" id="pkZoomIn"><svg class="ic s"><use href="#i-plus"/></svg></div>
+                <div class="roundbtn" id="pkZoomOut"><svg class="ic s"><use href="#i-minus"/></svg></div>
+                <div class="roundbtn" id="pkLoc"><svg class="ic s"><use href="#i-loc"/></svg></div>
+              </div>
+
+              <!-- POI 气泡 -->
+              <div class="poi-chip" style="left:150px;top:250px"><span style="width:5px;height:5px;border-radius:50%;background:var(--brand)"></span>望京 SOHO</div>
+              <div class="poi-chip" style="left:186px;top:524px"><span style="width:5px;height:5px;border-radius:50%;background:var(--mm-rail)"></span>阜通站</div>
+              <div class="poi-chip" style="left:242px;top:648px"><span style="width:5px;height:5px;border-radius:50%;background:var(--err)"></span>国贸三期</div>
+              <div class="poi-chip" style="left:36px;top:430px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>朝阳公园西门</div>
+
+              <!-- 中心图钉 -->
+              <div class="center-pin">
+                <svg width="34" height="44" viewBox="0 0 34 44">
+                  <path d="M17 43S31 26.4 31 18A14 14 0 103 18c0 8.4 14 25 14 25z" fill="var(--pin)"/>
+                  <circle cx="17" cy="17" r="5.4" fill="#fff"/>
+                </svg>
+                <div class="sh"></div>
+              </div>
+              <div class="pick-hint"><svg class="ic s"><use href="#i-target"/></svg>拖动地图移动图钉，或长按地图选点</div>
+
+              <!-- 底部位置卡片 -->
+              <div class="pick-card">
+                <div class="grab"></div>
+                <div class="row" style="align-items:flex-start">
+                  <span style="flex:1">
+                    <span class="pc-title">望京 SOHO</span>
+                    <span class="pc-sub">北京市朝阳区阜通东大街 1 号院</span>
+                  </span>
+                  <span class="chip brand">1.2 km</span>
+                </div>
+                <div class="pc-coord">
+                  <div class="seg" style="flex:none;width:198px" id="pcSeg">
+                    <button>WGS-84</button><button class="on">GCJ-02</button><button>BD-09</button>
+                  </div>
+                  <span class="v mono" style="flex:1;text-align:right">39.996120, 116.471380</span>
+                  <svg class="ic s" data-copy style="color:var(--text-3);cursor:pointer"><use href="#i-copy"/></svg>
+                </div>
+                <div class="pc-acts">
+                  <button class="btn" style="flex:1.5">设为终点</button>
+                  <button class="btn outline" style="flex:1">设为起点</button>
+                  <button class="btn outline" style="flex:1">途径点</button>
+                </div>
+              </div>
+            </div>
+            <div class="navbar" style="position:absolute;bottom:0;left:0;right:0;z-index:6"><i style="background:rgba(255,255,255,.6)"></i></div>
+          </section>
+
+          <!-- ===== 运行中变速 ===== -->
+          <section class="frame" id="f-speed">
+            <div class="statusband">
+              <div class="band">
+                <div class="band-top">
+                  <span class="chip ok"><svg class="ic s"><use href="#i-shield"/></svg>模拟位置</span>
+                  <span class="chip ok"><svg class="ic s"><use href="#i-loc"/></svg>定位</span>
+                  <span class="spacer"></span>
+                  <span class="state-pill run">运行中</span>
+                  <svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-d"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="mapwrap" style="flex:0 0 196px">
+              <svg viewBox="0 0 380 196" preserveAspectRatio="xMidYMid slice">
+                <rect width="380" height="196" fill="var(--map-bg)"/>
+                <path d="M0 150 q70 -20 130 6 t150 -40 100 26 V196 H0Z" fill="var(--map-land)" opacity=".8"/>
+                <g stroke="var(--map-road-edge)" fill="none" stroke-linecap="round">
+                  <path d="M0 96 H380" stroke-width="14"/><path d="M150 0 V196" stroke-width="12"/><path d="M280 0 V196" stroke-width="10"/></g>
+                <g stroke="var(--map-road)" fill="none" stroke-linecap="round">
+                  <path d="M0 96 H380" stroke-width="9"/><path d="M150 0 V196" stroke-width="7.5"/><path d="M280 0 V196" stroke-width="6"/></g>
+                <path d="M40 150 L120 96 L196 88 L300 40" stroke="var(--text-3)" stroke-width="5" fill="none" stroke-dasharray="9 8" opacity=".8"/>
+                <path d="M40 150 L120 96 L196 88" stroke="var(--brand)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <circle cx="40" cy="150" r="7" fill="var(--ok)" stroke="#fff" stroke-width="2.2"/>
+                <circle cx="300" cy="40" r="7" fill="var(--err)" stroke="#fff" stroke-width="2.2"/>
+                <g><circle class="pulse" cx="196" cy="88" r="9" fill="var(--brand)" opacity=".35"/>
+                  <g transform="rotate(-24 196 88)"><path d="M196 64 l10 28 -10 -6.5 -10 6.5 Z" fill="var(--brand)"/></g>
+                  <circle cx="196" cy="88" r="9" fill="var(--brand)" stroke="#fff" stroke-width="2.4"/></g>
+              </svg>
+              <div class="mapbtn mb-follow on" style="top:10px"><svg class="ic s"><use href="#i-target"/></svg>Follow</div>
+            </div>
+
+            <div class="card" style="margin:12px 16px 0;padding:16px 16px 18px;flex:none">
+              <div class="row">
+                <span class="lbl" style="font-size:12px">实时调速</span>
+                <span class="spacer" style="flex:1"></span>
+                <span class="chip brand">不打断位移</span>
+              </div>
+              <div class="speed-hero">
+                <span class="speed-num mono" id="spNum">30.0</span>
+                <span class="speed-unit">km/h</span>
+                <span class="spacer" style="flex:1"></span>
+                <span class="chip" id="spMult" style="background:var(--brand);color:#fff">2×</span>
+              </div>
+              <div class="slider-wrap">
+                <span class="bubble mono" id="spBubble" style="left:24%">30 km/h</span>
+                <input type="range" id="spRange" min="1" max="120" value="30">
+              </div>
+              <div class="presets" id="spMults" style="margin-top:12px">
+                <button data-m="1">1× 慢速</button>
+                <button data-m="2" class="on">2× 常速</button>
+                <button data-m="5">5× 快速</button>
+              </div>
+              <div class="eta-cmp">
+                <div class="col"><div class="k">预计剩余</div><div class="v mono old">18 分钟</div></div>
+                <svg class="ic" style="color:var(--text-3)"><use href="#i-chev-r"/></svg>
+                <div class="col"><div class="k">调速后</div><div class="v mono new" id="spEta">8.8 分钟</div></div>
+                <div class="col" style="text-align:right"><div class="k">预计到达</div><div class="v mono" id="spArr">16:05</div></div>
+              </div>
+              <div class="live-tip">
+                <svg class="ic s" style="margin-top:1px"><use href="#i-check"/></svg>
+                <span>拖动即时预览，松手后生效。调速只改变推进速率，当前位置、航向与已走轨迹都不重置。</span>
+              </div>
+            </div>
+
+            <div class="actionbar">
+              <button class="btn" style="flex:1"><svg class="ic s"><use href="#i-pause"/></svg>暂停</button>
+              <button class="btn danger stop" style="flex:0 0 92px">停止</button>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 更多设置 ===== -->
+          <section class="frame" id="f-settings">
+            <div class="row" style="padding:6px 16px 10px;gap:8px">
+              <button class="mini" style="border:0;background:transparent" data-go="main"><svg class="ic"><use href="#i-chev-l"/></svg></button>
+              <span style="font-size:17px;font-weight:700">设置</span>
+            </div>
+            <div style="flex:1;overflow:auto;padding:0 16px 20px">
+              <div class="grp-title">显示</div>
+              <div class="card" style="padding:2px 12px">
+                <div class="setrow"><span><span class="t">坐标显示格式</span><span class="s">WGS-84 · 度分秒</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">速度单位</span><span class="s">km/h</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">主题</span><span class="s">浅色</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">地图底图</span><span class="s">标准图</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+              </div>
+              <div class="grp-title">运行</div>
+              <div class="card" style="padding:2px 12px">
+                <div class="setrow"><span><span class="t">后台常驻通知</span><span class="s">关闭会导致服务被系统回收</span></span><span class="spacer"></span><span class="sw on" data-sw></span></div>
+                <div class="setrow"><span><span class="t">屏幕常亮</span></span><span class="spacer"></span><span class="sw" data-sw></span></div>
+                <div class="setrow"><span><span class="t">到达终点后循环</span></span><span class="spacer"></span><span class="sw" data-sw></span></div>
+              </div>
+              <div class="grp-title">数据</div>
+              <div class="card" style="padding:2px 12px">
+                <div class="setrow"><span><span class="t">GPX 导入 / 导出</span><span class="s">轨迹可存可分享</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">常用点位</span><span class="s">3 个</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--text-3)"><use href="#i-chev-r"/></svg></div>
+                <div class="setrow"><span><span class="t">清除本地数据</span><span class="s">位置数据默认仅本地存储</span></span><span class="spacer"></span><svg class="ic s" style="color:var(--err)"><use href="#i-trash"/></svg></div>
+              </div>
+              <div class="card" style="padding:14px;margin-top:16px;background:var(--warn-soft);border-color:transparent">
+                <div class="row" style="align-items:flex-start;gap:8px">
+                  <svg class="ic s" style="color:var(--warn);margin-top:2px"><use href="#i-warn"/></svg>
+                  <span style="font-size:11.5px;line-height:1.65;color:var(--text)">
+                    <b>用途声明</b>：本工具仅用于开发测试、定位类应用 QA 与个人位置隐私保护。<br>
+                    禁止用于考勤作弊、游戏外挂、欺诈或伪造物流轨迹等违规违法行为。
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+          <!-- ===== 通知 ===== -->
+          <section class="frame" id="f-notif">
+            <div class="notif-shade"></div>
+            <div style="flex:1;display:flex;flex-direction:column;background:var(--bg);position:relative">
+              <div class="notif-panel">
+                <div class="notif-card">
+                  <div class="notif-top">
+                    <span class="app"><svg class="ic s"><use href="#i-loc"/></svg></span>
+                    <span class="nm">GPS 漫游</span>
+                    <span class="spacer"></span>
+                    <span class="chip brand">进行中</span>
+                  </div>
+                  <div class="notif-title">正在模拟位置 · 路线模式</div>
+                  <div class="notif-sub mono">39.931204, 116.430188 · 15.2 km/h · 42%</div>
+                  <div class="notif-acts">
+                    <button><svg class="ic s"><use href="#i-pause"/></svg>暂停</button>
+                    <button class="stop"><svg class="ic s"><use href="#i-stop"/></svg>停止</button>
+                  </div>
+                </div>
+                <div class="notif-card" style="background:transparent;border-style:dashed">
+                  <div class="notif-top">
+                    <span class="app" style="background:var(--surface-3);color:var(--text-2)"><svg class="ic s"><use href="#i-pause"/></svg></span>
+                    <span class="nm">GPS 漫游 · 已暂停</span>
+                    <span class="spacer"></span>
+                    <span class="chip warn">暂停</span>
+                  </div>
+                  <div class="notif-sub" style="margin-top:8px">已暂停在 3.20 km 处，进度 42%</div>
+                  <div class="notif-acts">
+                    <button><svg class="ic s"><use href="#i-play"/></svg>继续</button>
+                    <button class="stop"><svg class="ic s"><use href="#i-stop"/></svg>停止</button>
+                  </div>
+                </div>
+                <div class="hint" style="text-align:center;margin-top:10px">ongoing 通知，不可滑动清除</div>
+              </div>
+            </div>
+            <div class="navbar"><i></i></div>
+          </section>
+
+        </div>
+
+        <div class="toast" id="toast">已复制坐标</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 右侧说明 -->
+  <aside class="notes">
+    <div class="card">
+      <h3>视觉基调</h3>
+      <p>轻量化工具：单主色、克制阴影、统一圆角。地图占最大面积，其余区域压到最薄。</p>
+      <div class="swatches">
+        <div class="sw-cols">
+          <div class="sw-row" style="flex-direction:column;gap:4px"><div class="sw-box" style="background:#1B6EF3"></div><span>主色</span></div>
+          <div class="sw-row" style="flex-direction:column;gap:4px"><div class="sw-box" style="background:#16A34A"></div><span>可用</span></div>
+          <div class="sw-row" style="flex-direction:column;gap:4px"><div class="sw-box" style="background:#E08A00"></div><span>待处理</span></div>
+          <div class="sw-row" style="flex-direction:column;gap:4px"><div class="sw-box" style="background:#DC2626"></div><span>出错</span></div>
+          <div class="sw-row" style="flex-direction:column;gap:4px"><div class="sw-box" style="background:#6B7280"></div><span>途径点</span></div>
+          <div class="sw-row" style="flex-direction:column;gap:4px"><div class="sw-box" style="background:#E9EEF3"></div><span>底图</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>栅格与圆角</h3>
+      <div class="sp-row"><span>基准栅格</span><b>4 dp</b></div>
+      <div class="sp-row"><span>页面边距</span><b>16 dp</b></div>
+      <div class="sp-row"><span>卡片圆角</span><b>16 dp</b></div>
+      <div class="sp-row"><span>按钮圆角</span><b>14 dp</b></div>
+      <div class="sp-row"><span>弹层圆角</span><b>22 dp</b></div>
+      <div class="sp-row"><span>最小热区</span><b>44 dp</b></div>
+    </div>
+    <div class="card">
+      <h3>字号</h3>
+      <div class="sp-row"><span>标题</span><b>17 / 700</b></div>
+      <div class="sp-row"><span>区块标签</span><b>11.5 / 700</b></div>
+      <div class="sp-row"><span>正文</span><b>13.5 / 400</b></div>
+      <div class="sp-row"><span>数据数值</span><b>15 / 650 等宽</b></div>
+      <div class="sp-row"><span>辅助说明</span><b>11.5 / 400</b></div>
+    </div>
+    <div class="card">
+      <h3>地图标记语义</h3>
+      <ul>
+        <li>起点：绿色实心圆 + 白色描边</li>
+        <li>终点：红色实心圆 + 白色描边</li>
+        <li>途径点：中性灰空心圆</li>
+        <li>当前游标：主色方向箭头 + 呼吸光晕</li>
+        <li>已走路线：主色实线 6dp</li>
+        <li>未走路线：中性虚线 5dp</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>当前画面要点</h3>
+      <p id="noteText">主屏空闲态：地图最大化，主操作落在拇指可达区，状态条常驻顶部并支持展开错误详情。</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var phone=document.getElementById('phone');
+  function fit(){var h=window.innerHeight-150;var s=Math.min(1,Math.max(.55,h/915));phone.style.setProperty('--ps',s);
+    phone.style.marginBottom=(915*(s-1))+'px';}
+  fit();window.addEventListener('resize',fit);
+
+  // 主题
+  document.getElementById('themeBtn').onclick=function(){
+    var d=root.getAttribute('data-theme')==='dark';
+    root.setAttribute('data-theme',d?'light':'dark');
+    document.getElementById('themeTxt').textContent=d?'深色':'浅色';
+  };
+
+  // 画面切换
+  var frames={main:'f-main',onboard:'f-onboard',empty:'f-empty',loading:'f-loading',error:'f-error',
+    pickmap:'f-pickmap',speed:'f-speed',stick:'f-stick',draw:'f-draw',settings:'f-settings',notif:'f-notif'};
+  var notes={
+    main:'主屏：状态条 + 模式切换 + 地图（最大化）+ 数据面板 + 控制区 + 主操作。所有主操作位于屏幕下三分之一。',
+    onboard:'首次启动：分步引导代替报错，未完成步骤以待处理黄标注，已完成步骤用绿色勾选。',
+    empty:'空状态：地图区用虚线占位框给出明确指引，同时提供两个最可能的次级入口。',
+    loading:'路径规划中：地图用骨架屏，加载提示浮于地图之上，避免整屏转圈打断空间感。',
+    error:'错误态：状态条转为错误红并默认展开详情，地图降透明度，操作按钮替换为恢复动作。',
+    pickmap:'地图选点：贴近高德的底图观感——米灰底、绿地水系、道路分级（高速橙 / 主干黄边 / 次干白）、地铁线、路况三色与 POI 气泡。中心固定图钉 + 底部位置卡片承载坐标系切换与落点动作。',
+    speed:'运行中变速：倍速档位 1×/2×/5× 与滑杆双向联动，拖动时气泡实时预览，剩余时间与到达时刻同步刷新，明确告知调速不重置位置。',
+    stick:'摇杆手动控制：无预设路线时用摇杆实时控向控速，推杆距离映射速度、角度映射航向，松手回落并停止推进。适合边走边看效果的临时调整。',
+    draw:'绘制路径：在底图上依次点击落点，实时算出里程与预计用时；「试跑一遍」先看游标走位对不对，满意再「保存路线」进路线库，下次载入直接复跑。底图暂用示意图，接入真实地图后换成真图即可，流程不变。',
+    settings:'更多设置：分组卡片 + 列表项，用途声明与免责说明常驻底部，不做折叠隐藏。',
+    notif:'常驻通知：ongoing 不可清除，运行中显示坐标与进度，暂停态给出继续/停止，两种状态按钮语义区分。'
+  };
+  function show(name){
+    Object.keys(frames).forEach(function(k){document.getElementById(frames[k]).classList.toggle('active',k===name);});
+    document.getElementById('noteText').textContent=notes[name]||'';
+  }
+  function closeSheets(){
+    ['pick','tune','places','routes','savename'].forEach(function(k){
+      var el=document.getElementById('sh-'+k); if(el)el.classList.remove('open');
+    });
+    document.getElementById('scrim').classList.remove('show');
+    document.getElementById('drawScrim').classList.remove('show');
+    document.getElementById('crosshair').classList.remove('show');
+  }
+  document.querySelectorAll('#nav button').forEach(function(b){
+    b.onclick=function(){
+      document.querySelectorAll('#nav button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      closeSheets();
+      stopPlay();
+      show(b.dataset.go);
+      if(b.dataset.run) setRun(b.dataset.run);
+      else if(b.dataset.go==='main') setRun('idle');
+      if(b.dataset.sheet) setTimeout(function(){openSheet(b.dataset.sheet);},240);
+    };
+  });
+  document.querySelectorAll('[data-go]').forEach(function(b){
+    if(b.closest('#nav'))return;
+    b.onclick=function(){ closeSheets(); show(b.dataset.go); };
+  });
+  function openSheet(k){
+    document.getElementById('sh-'+k).classList.add('open');
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById('drawScrim').classList.add('show');
+  }
+  document.querySelectorAll('[data-open]').forEach(function(b){ b.onclick=function(){openSheet(b.dataset.open);}; });
+  document.querySelectorAll('[data-close]').forEach(function(b){ b.onclick=function(){closeSheets();}; });
+  document.getElementById('scrim').onclick=closeSheets;
+  document.getElementById('drawScrim').onclick=closeSheets;
+
+  // 分段控件通用
+  document.querySelectorAll('.seg').forEach(function(seg){
+    seg.querySelectorAll('button').forEach(function(b){
+      b.onclick=function(){
+        if(seg.id==='modeSeg'&&(run==='running'||run==='paused'))return;
+        seg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+        b.classList.add('on');
+      };
+    });
+  });
+
+  // 开关
+  document.querySelectorAll('[data-sw]').forEach(function(s){ s.onclick=function(){s.classList.toggle('on');}; });
+  document.querySelectorAll('[data-tg]').forEach(function(s){ s.onclick=function(){s.classList.toggle('on');}; });
+
+  // 十字准星
+  document.getElementById('btnCross').onclick=function(){
+    closeSheets();
+    document.getElementById('crosshair').classList.add('show');
+    toast('拖动地图移动准星，点击任意位置确认');
+  };
+  document.getElementById('crosshair').onclick=function(){this.classList.remove('show');};
+
+  // Follow / Free
+  var follow=true;
+  document.getElementById('followBtn').onclick=function(){
+    follow=!follow;
+    this.classList.toggle('on',follow);
+    document.getElementById('followTxt').textContent=follow?'Follow':'Free';
+    if(follow&&mainMap)mainMap.reset();
+  };
+
+  // 速度：主屏与变速页共用同一个值，任一改动即时同步到另一页
+  var LEFT_KM=4.42, BASE=15;
+  var spd=document.getElementById('spdRange');
+  var spRange=document.getElementById('spRange');
+  function applySpeed(v){
+    v=Math.max(1,Math.min(120,Math.round(v)));
+
+    spd.value=v;
+    document.getElementById('tvSpdSet').textContent=v;
+    document.querySelectorAll('#presets button').forEach(function(x){x.classList.toggle('on',+x.dataset.v===v);});
+    document.querySelectorAll('#mults button').forEach(function(x){x.classList.toggle('on',BASE*(+x.dataset.m)===v);});
+
+    spRange.value=v;
+    document.getElementById('spNum').textContent=v.toFixed(1);
+    var pct=Math.round((v-1)/119*100);
+    var bb=document.getElementById('spBubble');
+    bb.style.left='calc('+pct+'% + '+((50-pct)*0.22)+'px)';
+    bb.textContent=v+' km/h';
+    var eta=LEFT_KM/v*60;
+    document.getElementById('spEta').textContent=(eta<10?eta.toFixed(1):Math.round(eta))+' 分钟';
+    var arr=new Date(2026,8,13,15,56); arr.setMinutes(arr.getMinutes()+Math.round(eta));
+    document.getElementById('spArr').textContent=('0'+arr.getHours()).slice(-2)+':'+('0'+arr.getMinutes()).slice(-2);
+    var mult=v/BASE;
+    document.getElementById('spMult').textContent=(Math.abs(mult-1)<.01?'1':(Math.abs(mult-2)<.01?'2':(Math.abs(mult-5)<.01?'5':mult.toFixed(1))))+'×';
+    document.querySelectorAll('#spMults button').forEach(function(x){x.classList.toggle('on',BASE*(+x.dataset.m)===v);});
+  }
+  spd.oninput=function(){applySpeed(+spd.value);};
+  spRange.oninput=function(){applySpeed(+spRange.value);};
+  document.querySelectorAll('#presets button').forEach(function(b){ b.onclick=function(){applySpeed(+b.dataset.v);}; });
+  document.querySelectorAll('#mults button').forEach(function(b){ b.onclick=function(){applySpeed(BASE*(+b.dataset.m));}; });
+  document.querySelectorAll('#spMults button').forEach(function(b){ b.onclick=function(){applySpeed(BASE*(+b.dataset.m));}; });
+  applySpeed(30);
+
+  // 运行状态
+  var run='idle';
+  var S={
+    idle:  {pill:'',txt:'空闲',coord:'39.908120, 116.397455',spd:'0.0',bear:'--',acc:'--',alt:'--',done:'0.00',pct:'0%',eta:'预计 --',main:'开始漫游',icon:'i-play',mainOn:true,stop:false,cursor:0,doneOpacity:0,cursorT:'translate(0,0)'},
+    running:{pill:'run',txt:'运行中',coord:'39.931204, 116.430188',spd:'30.0',bear:'62',acc:'8',alt:'48',done:'3.20',pct:'42%',eta:'剩余 9 分钟',main:'暂停',icon:'i-pause',mainOn:true,stop:true,cursor:1,doneOpacity:1,cursorT:'translate(0,0)'},
+    paused:{pill:'pause',txt:'已暂停',coord:'39.931204, 116.430188',spd:'0.0',bear:'62',acc:'8',alt:'48',done:'3.20',pct:'42%',eta:'剩余 9 分钟',main:'继续',icon:'i-play',mainOn:true,stop:true,cursor:1,doneOpacity:1,cursorT:'translate(0,0)'},
+    done:  {pill:'done',txt:'已完成',coord:'39.996120, 116.471380',spd:'0.0',bear:'62',acc:'7',alt:'52',done:'7.62',pct:'100%',eta:'已到达终点',main:'再次开始',icon:'i-play',mainOn:true,stop:false,cursor:1,doneOpacity:1,cursorT:'translate(90,-118)'}
+  };
+  function setRun(s){
+    run=s; var v=S[s];
+    document.getElementById('f-main').setAttribute('data-run',s);
+    var p=document.getElementById('statePill');
+    p.className='state-pill '+(v.pill||'');
+    document.getElementById('stateTxt').textContent=v.txt;
+    document.getElementById('tvCoord').textContent=v.coord;
+    document.getElementById('tvSpeed').textContent=v.spd;
+    document.getElementById('tvBear').textContent=v.bear;
+    document.getElementById('tvAcc').textContent=v.acc;
+    document.getElementById('tvAlt').textContent=v.alt;
+    document.getElementById('tvDone').textContent=v.done;
+    document.getElementById('tvPct').textContent=v.pct;
+    document.getElementById('tvEta').textContent=v.eta;
+    document.getElementById('btnMainTxt').textContent=v.main;
+    document.querySelector('#btnMain use').setAttribute('href','#'+v.icon);
+    document.getElementById('btnStop').disabled=!v.stop;
+    document.getElementById('liveTag').style.display=(s==='running'||s==='paused')?'inline-block':'none';
+    document.getElementById('cursor').setAttribute('opacity',v.cursor);
+    document.getElementById('cursor').setAttribute('transform',v.cursorT);
+    document.getElementById('routeDone').setAttribute('opacity',v.doneOpacity);
+    var pct=parseInt(v.pct);
+    document.getElementById('progFill').style.width=pct+'%';
+    document.getElementById('progKnob').style.left=pct+'%';
+    if(s==='done'){document.getElementById('routeDone').setAttribute('d','M56 330 L146 250 L232 236 L322 118');}
+    else{document.getElementById('routeDone').setAttribute('d','M56 330 L146 250 L232 236');}
+  }
+  // ---------- 路线推进动画 ----------
+  // 四个落点同时带像素坐标与经纬度，驱动游标、已走轨迹与数据面板联动
+  var WP=[
+    {x:56, y:330, lat:39.908120, lng:116.397455},
+    {x:146,y:250, lat:39.917400, lng:116.412900},
+    {x:232,y:236, lat:39.931204, lng:116.430188},
+    {x:322,y:118, lat:39.996120, lng:116.471380}
+  ];
+  var TOTAL_KM=7.62, SEG=[], TOTLEN=0;
+  for(var wi=1;wi<WP.length;wi++){
+    var sl=Math.sqrt(Math.pow(WP[wi].x-WP[wi-1].x,2)+Math.pow(WP[wi].y-WP[wi-1].y,2));
+    SEG.push({a:WP[wi-1],b:WP[wi],len:sl,start:TOTLEN});
+    TOTLEN+=sl;
+  }
+  function atRatio(r){
+    r=Math.max(0,Math.min(1,r));
+    var d=r*TOTLEN, s=SEG[SEG.length-1];
+    for(var i=0;i<SEG.length;i++){ if(d<=SEG[i].start+SEG[i].len){s=SEG[i];break;} }
+    var t=s.len<=0?0:Math.max(0,Math.min(1,(d-s.start)/s.len));
+    return {
+      x:s.a.x+(s.b.x-s.a.x)*t,
+      y:s.a.y+(s.b.y-s.a.y)*t,
+      lat:s.a.lat+(s.b.lat-s.a.lat)*t,
+      lng:s.a.lng+(s.b.lng-s.a.lng)*t,
+      ang:Math.atan2(s.b.y-s.a.y,s.b.x-s.a.x)*180/Math.PI+90
+    };
+  }
+  function partialD(r){
+    var d=r*TOTLEN, n=Math.max(2,Math.ceil(d/5)), pts=[];
+    if(!(d>0)){ return 'M'+WP[0].x+' '+WP[0].y+' L'+WP[0].x+' '+WP[0].y; }
+    for(var i=0;i<=n;i++){ var q=atRatio(d*i/n/TOTLEN); pts.push(q.x.toFixed(1)+' '+q.y.toFixed(1)); }
+    return 'M'+pts.join(' L');
+  }
+  var cursorEl=document.getElementById('cursor');
+  var arrowEl=document.getElementById('cursorArrow');
+  var routeDoneEl=document.getElementById('routeDone');
+  function renderProgress(r,stopped){
+    var p=atRatio(r);
+    cursorEl.setAttribute('opacity','1');
+    cursorEl.setAttribute('transform','translate('+(p.x-232).toFixed(1)+','+(p.y-236).toFixed(1)+')');
+    arrowEl.setAttribute('transform','rotate('+p.ang.toFixed(1)+' 232 236)');
+    routeDoneEl.setAttribute('d',partialD(r));
+    routeDoneEl.setAttribute('opacity','1');
+    document.getElementById('progFill').style.width=(r*100).toFixed(1)+'%';
+    document.getElementById('progKnob').style.left=(r*100).toFixed(1)+'%';
+    document.getElementById('tvPct').textContent=Math.round(r*100)+'%';
+    document.getElementById('tvDone').textContent=(TOTAL_KM*r).toFixed(2);
+    document.getElementById('tvCoord').textContent=p.lat.toFixed(6)+', '+p.lng.toFixed(6);
+    document.getElementById('tvBear').textContent=String(Math.round((p.ang%360+360)%360));
+    document.getElementById('tvAcc').textContent=String(6+Math.round(Math.random()*8));
+    document.getElementById('tvAlt').textContent='48';
+    var mm=TOTAL_KM*(1-r)/30*60;
+    if(stopped){
+      document.getElementById('tvSpeed').textContent='0.0';
+      document.getElementById('tvEta').textContent='已暂停 · 剩余 '+mm.toFixed(1)+' 分钟';
+    }else{
+      document.getElementById('tvSpeed').textContent=(30+(Math.random()-0.5)*1.4).toFixed(1);
+      document.getElementById('tvEta').textContent='剩余 '+(mm<10?mm.toFixed(1):Math.round(mm))+' 分钟';
+    }
+  }
+  var play={on:false,raf:0,last:0,p:0}, PLAY_MS=11000;
+  function stopPlay(){ play.on=false; cancelAnimationFrame(play.raf); play.last=0; play.p=0; }
+  function tickPlay(ts){
+    if(!play.on)return;
+    if(!play.last)play.last=ts;
+    play.p=Math.min(1,play.p+(ts-play.last)/PLAY_MS);
+    play.last=ts;
+    renderProgress(play.p,false);
+    if(play.p>=1){
+      play.on=false;
+      setRun('done');
+      toast('已到达终点');
+      openSheet('finish');
+      return;
+    }
+    play.raf=requestAnimationFrame(tickPlay);
+  }
+  function startPlay(){ play.p=0; play.last=0; play.on=true; setRun('running'); renderProgress(0,false); cancelAnimationFrame(play.raf); play.raf=requestAnimationFrame(tickPlay); }
+  function pausePlay(){ play.on=false; cancelAnimationFrame(play.raf); setRun('paused'); renderProgress(play.p,true); }
+  function resumePlay(){ play.on=true; play.last=0; setRun('running'); cancelAnimationFrame(play.raf); play.raf=requestAnimationFrame(tickPlay); }
+
+  setRun('idle');
+  document.getElementById('btnMain').onclick=function(){
+    if(run==='running')pausePlay();
+    else if(run==='paused')resumePlay();
+    else startPlay();
+  };
+  document.getElementById('btnStop').onclick=function(){ stopPlay(); setRun('idle'); };
+  document.getElementById('band').onclick=function(e){
+    if(e.target.closest('.chip'))return;
+    this.classList.toggle('open');
+  };
+
+  // 轻提示
+  var toastEl=document.getElementById('toast'), toastTimer=null;
+  function toast(msg){
+    toastEl.textContent=msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){toastEl.classList.remove('show');},1600);
+  }
+
+  // 复制坐标
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.style.cursor='pointer';
+    b.onclick=function(e){
+      e.stopPropagation();
+      var scope=b.closest('.pc-coord');
+      var txt=scope?scope.querySelector('.v').textContent:document.getElementById('tvCoord').textContent;
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).catch(function(){});}
+      toast('已复制：'+txt);
+    };
+  });
+
+  // 摇杆：推杆距离映射速度，角度映射航向
+  var pad=document.getElementById('stickPad');
+  if(pad){
+    var knob=document.getElementById('stickKnob');
+    var bearEl=document.getElementById('stickBear');
+    var spdEl=document.getElementById('stickSpd');
+    var maxR=78, dragging=false;
+    function calcR(){maxR=Math.max(40,pad.clientWidth/2-38);}
+    calcR();
+    window.addEventListener('resize',calcR);
+
+    function drive(e){
+      var r=pad.getBoundingClientRect();
+      var dx=e.clientX-(r.left+r.width/2);
+      var dy=e.clientY-(r.top+r.height/2);
+      var d=Math.sqrt(dx*dx+dy*dy);
+      if(d>maxR){dx=dx/d*maxR;dy=dy/d*maxR;d=maxR;}
+      knob.style.transform='translate(calc(-50% + '+dx.toFixed(1)+'px), calc(-50% + '+dy.toFixed(1)+'px))';
+      var ratio=Math.min(1,d/maxR);
+      if(ratio<0.08){bearEl.textContent='--';spdEl.textContent='0.0';return;}
+      bearEl.textContent=String(Math.round((Math.atan2(dx,-dy)*180/Math.PI+360)%360));
+      spdEl.textContent=(ratio*40).toFixed(1);
+    }
+    function release(){
+      dragging=false;
+      knob.style.transform='translate(-50%,-50%)';
+      bearEl.textContent='--';
+      spdEl.textContent='0.0';
+    }
+    pad.addEventListener('pointerdown',function(e){
+      dragging=true;
+      if(pad.setPointerCapture){pad.setPointerCapture(e.pointerId);}
+      drive(e);
+      e.preventDefault();
+    });
+    pad.addEventListener('pointermove',function(e){if(dragging)drive(e);});
+    pad.addEventListener('pointerup',release);
+    pad.addEventListener('pointercancel',release);
+  }
+
+  // ---------- 地图拖拽 / 缩放 ----------
+  // 原型底图是静态 SVG，这里补上平移与缩放，行为贴近真实地图
+  function makePannable(wrap,svg,opt){
+    if(!wrap||!svg)return null;
+    opt=opt||{};
+    var minK=opt.minK||1, maxK=opt.maxK||4, k=opt.k||minK, tx=0, ty=0;
+    wrap.style.cursor='grab';
+    wrap.style.touchAction='none';
+    function paint(){
+      svg.style.transformOrigin='50% 50%';
+      svg.style.transform='translate('+tx.toFixed(1)+'px,'+ty.toFixed(1)+'px) scale('+k.toFixed(3)+')';
+      if(opt.onChange)opt.onChange(tx,ty,k);
+    }
+    function clamp(){
+      var mx=(k-1)/2*wrap.clientWidth, my=(k-1)/2*wrap.clientHeight;
+      tx=Math.max(-mx,Math.min(mx,tx));
+      ty=Math.max(-my,Math.min(my,ty));
+    }
+    function zoomBy(f){
+      var nk=Math.max(minK,Math.min(maxK,k*f));
+      if(Math.abs(nk-k)<1e-4)return;
+      k=nk; clamp(); paint();
+    }
+    var drag=false,sx=0,sy=0,ox=0,oy=0;
+    wrap.addEventListener('pointerdown',function(e){
+      if(e.target.closest('.mapbtn')||e.target.closest('.roundbtn')||e.target.closest('.pick-top')||e.target.closest('.pick-card'))return;
+      drag=true; sx=e.clientX; sy=e.clientY; ox=tx; oy=ty;
+      if(wrap.setPointerCapture){wrap.setPointerCapture(e.pointerId);}
+      wrap.style.cursor='grabbing';
+    });
+    wrap.addEventListener('pointermove',function(e){
+      if(!drag)return;
+      tx=ox+(e.clientX-sx);
+      ty=oy+(e.clientY-sy);
+      clamp(); paint();
+    });
+    function endDrag(){
+      if(!drag)return;
+      drag=false; wrap.style.cursor='grab';
+      if(opt.onChange)opt.onChange(tx,ty,k);
+    }
+    wrap.addEventListener('pointerup',endDrag);
+    wrap.addEventListener('pointercancel',endDrag);
+    wrap.addEventListener('wheel',function(e){
+      e.preventDefault();
+      zoomBy(e.deltaY<0?1.16:1/1.16);
+    },{passive:false});
+    paint();
+    return {
+      zoomIn:function(){zoomBy(1.3);},
+      zoomOut:function(){zoomBy(1/1.3);},
+      reset:function(){k=opt.k||minK; tx=0; ty=0; clamp(); paint();}
+    };
+  }
+
+  // 主屏地图
+  var mw=document.getElementById('mapwrap');
+  var mainMap=mw?makePannable(mw,mw.querySelector('svg:not(.crosshair)'),{k:1.25,minK:1,maxK:4}):null;
+  if(mainMap){
+    var zi=document.getElementById('zoomIn'), zo=document.getElementById('zoomOut'), ml=document.getElementById('mapLoc');
+    if(zi)zi.onclick=function(e){e.stopPropagation();mainMap.zoomIn();};
+    if(zo)zo.onclick=function(e){e.stopPropagation();mainMap.zoomOut();};
+    if(ml)ml.onclick=function(e){e.stopPropagation();mainMap.reset();toast('已回到当前位置');};
+    var dx0=0,dy0=0;
+    mw.addEventListener('pointerdown',function(e){dx0=e.clientX;dy0=e.clientY;});
+    mw.addEventListener('pointerup',function(e){
+      if(Math.abs(e.clientX-dx0)>5||Math.abs(e.clientY-dy0)>5)return;
+      var ch=document.getElementById('crosshair');
+      if(ch&&ch.classList.contains('show')){ch.classList.remove('show');toast('落点已确认');}
+    });
+  }
+
+  // 选点地图：拖动即调整落点，坐标实时跟随
+  var pickWrap=document.querySelector('.pickmap');
+  if(pickWrap){
+    var P_LAT=39.996120, P_LNG=116.471380, P_K=1.15;
+    var pcV=document.querySelector('.pc-coord .v');
+    var pcTitle=document.querySelector('.pc-title');
+    var pcSub=document.querySelector('.pc-sub');
+    var moved=false;
+    var pickMap=makePannable(pickWrap,pickWrap.querySelector('svg'),{
+      k:P_K,minK:1,maxK:4,
+      onChange:function(x,y,kk){
+        var lat=P_LAT+y*0.0000110/kk, lng=P_LNG-x*0.0000145/kk;
+        if(pcV)pcV.textContent=lat.toFixed(6)+', '+lng.toFixed(6);
+        var now=(Math.abs(x)>1||Math.abs(y)>1||Math.abs(kk-P_K)>0.01);
+        if(now!==moved){
+          moved=now;
+          if(pcTitle)pcTitle.textContent=now?'地图落点':'望京 SOHO';
+          if(pcSub)pcSub.textContent=now?'已按拖动偏移，可继续微调':'北京市朝阳区阜通东大街 1 号院';
+        }
+      }
+    });
+    var pzi=document.getElementById('pkZoomIn'), pzo=document.getElementById('pkZoomOut'), pl=document.getElementById('pkLoc');
+    if(pzi)pzi.onclick=function(e){e.stopPropagation();pickMap.zoomIn();};
+    if(pzo)pzo.onclick=function(e){e.stopPropagation();pickMap.zoomOut();};
+    if(pl)pl.onclick=function(e){e.stopPropagation();pickMap.reset();};
+  }
+
+  // ---------- 路径绘制 + 路线库 ----------
+  var D_W=9.0, D_H=13.0;   // 画布 100% 约对应 9km × 13km，只用于估算里程
+  var drawPts=[];
+  var routeLib=[
+    {name:'国贸 → 望京 SOHO', km:7.62, pts:[{x:14,y:82},{x:36,y:62},{x:57,y:59},{x:79,y:30}]},
+    {name:'环湖一圈', km:4.38, pts:[{x:20,y:30},{x:48,y:22},{x:74,y:38},{x:70,y:70},{x:34,y:74},{x:20,y:30}]},
+    {name:'公司 → 健身房', km:2.15, pts:[{x:30,y:68},{x:52,y:48},{x:66,y:34}]}
+  ];
+  function drawLengthKm(){
+    var m=0;
+    for(var i=1;i<drawPts.length;i++){
+      var dx=(drawPts[i].x-drawPts[i-1].x)/100*D_W*1000;
+      var dy=(drawPts[i].y-drawPts[i-1].y)/100*D_H*1000;
+      m+=Math.sqrt(dx*dx+dy*dy);
+    }
+    return m/1000;
+  }
+  function drawRender(){
+    var pins=document.getElementById('drawPins');
+    if(!pins)return;
+    pins.innerHTML='';
+    drawPts.forEach(function(p,i){
+      var el=document.createElement('span');
+      var cls='dpin';
+      if(i===0)cls+=' first';
+      if(i===drawPts.length-1&&drawPts.length>1)cls+=' last';
+      el.className=cls;
+      el.style.left=p.x+'%';
+      el.style.top=p.y+'%';
+      el.textContent=String(i+1);
+      pins.appendChild(el);
+    });
+    document.getElementById('drawLine').setAttribute('points',
+      drawPts.map(function(p){return p.x+','+p.y;}).join(' '));
+    document.getElementById('drawCount').textContent=drawPts.length+' 个点';
+    document.getElementById('dvPts').textContent=String(drawPts.length);
+    var km=drawLengthKm();
+    document.getElementById('dvKm').textContent=km.toFixed(2);
+    var mm=km/30*60;
+    document.getElementById('dvEta').textContent=km>0?((mm<10?mm.toFixed(1):Math.round(mm))+' 分钟'):'--';
+    var st=document.getElementById('dvState');
+    st.textContent='未验证';
+    st.style.color='var(--text-3)';
+    document.getElementById('drawHint').style.display=drawPts.length?'none':'';
+  }
+  function drawTestRun(){
+    if(drawPts.length<2){ toast('至少需要 2 个落点'); return; }
+    var cur=document.getElementById('drawCursor');
+    var seg=[], tot=0;
+    for(var i=1;i<drawPts.length;i++){
+      var dx=(drawPts[i].x-drawPts[i-1].x)/100*D_W;
+      var dy=(drawPts[i].y-drawPts[i-1].y)/100*D_H;
+      var L=Math.sqrt(dx*dx+dy*dy);
+      seg.push({a:drawPts[i-1],b:drawPts[i],len:L,start:tot});
+      tot+=L;
+    }
+    var DUR=Math.max(2600,Math.min(9000,drawLengthKm()*1200));
+    cur.style.opacity='1';
+    var t0=0;
+    function step(ts){
+      if(!t0)t0=ts;
+      var r=Math.min(1,(ts-t0)/DUR);
+      var d=r*tot, s=seg[seg.length-1];
+      for(var i=0;i<seg.length;i++){ if(d<=seg[i].start+seg[i].len){s=seg[i];break;} }
+      var k=s.len<=0?0:Math.max(0,Math.min(1,(d-s.start)/s.len));
+      cur.style.left=(s.a.x+(s.b.x-s.a.x)*k)+'%';
+      cur.style.top=(s.a.y+(s.b.y-s.a.y)*k)+'%';
+      if(r<1){ requestAnimationFrame(step); return; }
+      cur.style.opacity='0';
+      var st=document.getElementById('dvState');
+      st.textContent='已试跑';
+      st.style.color='var(--ok)';
+      toast('试跑完成，可以保存了');
+    }
+    requestAnimationFrame(step);
+  }
+  function renderRouteLib(){
+    var box=document.getElementById('routeList');
+    if(!box)return;
+    box.innerHTML='';
+    if(!routeLib.length){
+      box.innerHTML='<div class="hint">还没有保存的路线。到「绘制路径」里画一条并试跑，就能存进来。</div>';
+      return;
+    }
+    routeLib.forEach(function(r,i){
+      var el=document.createElement('div');
+      el.className='list-item';
+      el.innerHTML='<span class="ic-box"><svg class="ic"><use href="#i-route"/></svg></span>'
+        +'<span><span class="t">'+r.name+'</span><span class="s mono">'+r.pts.length+' 个落点 · '+r.km.toFixed(2)+' km</span></span>'
+        +'<span class="spacer"></span>';
+      var b=document.createElement('button');
+      b.className='mini'; b.textContent='载入';
+      b.onclick=function(ev){
+        ev.stopPropagation();
+        drawPts=r.pts.map(function(p){return {x:p.x,y:p.y};});
+        closeSheets();
+        show('draw');
+        drawRender();
+        toast('已载入「'+r.name+'」，可直接试跑');
+      };
+      el.appendChild(b);
+      var d=document.createElement('button');
+      d.className='mini'; d.style.marginLeft='6px';
+      d.innerHTML='<svg class="ic s"><use href="#i-trash"/></svg>';
+      d.onclick=function(ev){ ev.stopPropagation(); routeLib.splice(i,1); renderRouteLib(); };
+      el.appendChild(d);
+      box.appendChild(el);
+    });
+  }
+  var dw=document.getElementById('drawWrap');
+  if(dw){
+    dw.addEventListener('click',function(e){
+      if(e.target.closest('.pick-hint'))return;
+      var r=dw.getBoundingClientRect();
+      var x=Math.max(1,Math.min(99,(e.clientX-r.left)/r.width*100));
+      var y=Math.max(1,Math.min(99,(e.clientY-r.top)/r.height*100));
+      drawPts.push({x:+x.toFixed(2),y:+y.toFixed(2)});
+      drawRender();
+    });
+    document.getElementById('drawUndo').onclick=function(e){ e.stopPropagation(); drawPts.pop(); drawRender(); };
+    document.getElementById('drawClear').onclick=function(e){ e.stopPropagation(); drawPts=[]; drawRender(); toast('已清空'); };
+    document.getElementById('drawTest').onclick=function(e){ e.stopPropagation(); drawTestRun(); };
+    document.getElementById('drawSave').onclick=function(e){
+      e.stopPropagation();
+      if(drawPts.length<2){ toast('至少需要 2 个落点'); return; }
+      document.getElementById('svPts').textContent=String(drawPts.length);
+      document.getElementById('svKm').textContent=drawLengthKm().toFixed(2);
+      document.getElementById('saveName').value='路线 '+(routeLib.length+1);
+      openSheet('savename');
+    };
+  }
+  var saveOk=document.getElementById('saveConfirm');
+  if(saveOk){
+    saveOk.onclick=function(){
+      var v=(document.getElementById('saveName').value||'').trim();
+      routeLib.push({
+        name:v||('路线 '+(routeLib.length+1)),
+        km:drawLengthKm(),
+        pts:drawPts.map(function(p){return {x:p.x,y:p.y};})
+      });
+      closeSheets();
+      renderRouteLib();
+      toast('已保存到路线库');
+    };
+  }
+  drawRender();
+  renderRouteLib();
+})();
+</script>
+</body>
+</html>

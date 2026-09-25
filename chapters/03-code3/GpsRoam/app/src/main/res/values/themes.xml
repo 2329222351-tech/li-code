@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.GpsRoam" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorPrimaryDark">@color/brand_dark</item>
+    </style>
+
+    <!-- 唯一的主按钮：够大、位置固定，拿着手机走路时盲按也按得准 -->
+    <style name="PrimaryButton" parent="Widget.Material3.Button">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">58dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="backgroundTint">@color/brand</item>
+    </style>
+
+    <style name="SecondaryButton" parent="Widget.Material3.Button.TextButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/brand</item>
+    </style>
+
+    <style name="SpeedButton" parent="Widget.Material3.Button">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginHorizontal">3dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="LibraryRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingEnd">18dp</item>
+        <item name="android:paddingBottom">14dp</item>
+    </style>
+</resources>
