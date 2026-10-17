@@ -1,0 +1,45 @@
+{
+  "appId": "com.minimax.code21",
+  "productName": "学生手册背诵",
+  "copyright": "Copyright © 2026",
+  "asar": true,
+  "asarUnpack": [
+    ".output/**/*",
+    ".output/server/node_modules/**/*",
+    "node_modules/**/*"
+  ],
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "files": [
+    "electron/**/*",
+    ".output/**/*",
+    "package.json"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "reciter-${version}-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "学生手册背诵"
+  },
+  "portable": {
+    "artifactName": "reciter-${version}-portable.${ext}"
+  }
+}

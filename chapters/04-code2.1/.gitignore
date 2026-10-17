@@ -1,0 +1,43 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# nuxt build / dev
+.nuxt
+.output
+.nitro
+.cache
+dist
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# editor
+.vscode
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# env
+.env
+.env.local
+.env.*.local
+
+# misc
+*.tsbuildinfo
+.eslintcache
+
+# electron 打包产物
+release
+dist-v3
+
+# 本地背诵进度（属于个人数据，不入库）
+server/data/progress.json
+_tmp_*
