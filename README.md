@@ -19,12 +19,17 @@ li-code/
         ├── server/                         Nitro 服务端 API 与词库
         ├── electron/                       Electron 主进程 / preload
         └── release/                        打包产物（Git LFS）
-    └── 03-code3/           ← 第三章（当前）
+    └── 03-code3/           ← 第三章
         ├── GPS虚拟定位工具_思路设计.md      设计思路文档
         └── GpsRoam/                        Android 工程
             ├── app/src/main/java/com/gpsroam/   Kotlin 源码
             ├── screenshots/                     界面截图
             └── ui-prototype/                    HTML 高保真原型
+    └── 04-code2.1/         ← 第四章（当前）
+        ├── app/ components/ composables/   Nuxt 3 前端
+        ├── server/                         Nitro 服务端 API 与题库
+        ├── electron/                       Electron 主进程 / preload
+        └── tests/                          Vitest 单元测试
 ```
 
 ## 第一章 · 01-code1
@@ -73,6 +78,18 @@ GpsRoam —— Android 虚拟定位工具，通过官方 Mock Location 接口让
 自用工具，需在开发者选项里把它选为「模拟位置信息应用」后才能生效。
 仓库内不含 `gradlew`，直接用 Android Studio 打开，或用本机 Gradle 构建。
 
+## 第四章 · 04-code2.1
+
+2026 级新生学生手册考试背诵工具，Nuxt 3 + Vue 3 + TypeScript，可打包成 Windows 桌面端（Electron）。
+与 `02-code2` 同源同构，属于该项目的另一个版本。
+
+- 前端：`app/pages/`（`index` 题库、`recite` 背诵、`progress` 进度）、`components/`（`ReciteCard.vue`、`ProgressRing.vue`）
+- 服务端：`server/api/`（bank、progress）、`server/data/questions.json` 题库
+- 进度：`composables/useProgress.ts` + `server/utils/progressStore.ts`；个人进度不入库（见 `server/data/progress.json`）
+- 测试：`tests/bank.test.ts`、`tests/progress.test.ts`（Vitest）
+
+本地开发：`pnpm install` → `pnpm dev`；测试：`pnpm test`。
+
 ## 同步原则
 
 备份时**不包含**以下内容（已通过 `.gitignore` 排除）：
@@ -83,6 +100,8 @@ GpsRoam —— Android 虚拟定位工具，通过官方 Mock Location 接口让
 - `__pycache__/`、`node_modules/`、`.gradle/`、`build/` 等构建产物
 - `02-code2/dist-fresh/`、`dist-out/`、`dist-out2/`、`dist-v3/`：electron-builder 中间产物（合计约 416MB）
 - `03-code3/GpsRoam/app/build/`（~37MB）、`.gradle/`、`local.properties`、`.cxx/` 等 Android 构建产物与本地环境配置
+- `04-code2.1/node_modules/`、`.nuxt/`、`.output/` 等 Nuxt/Electron 构建产物（合计约 460MB）
+- `04-code2.1/server/data/progress.json`：个人背诵进度数据
 
 `02-code2/release/` 例外 —— 作为成品备份保留，但通过 **Git LFS** 跟踪：
 其中 `code2-portable-x64.zip`（323MB）、`code2.exe`（178MB）、`app.asar`（138MB×2）
@@ -93,4 +112,4 @@ GpsRoam —— Android 虚拟定位工具，通过官方 Mock Location 接口让
 - 仓库是 **Public**，请勿提交任何含密钥、token、个人隐私的内容。
 - `termux-tasker-master/` 是上游开源项目源码，仅供本地参考。
 - LFS 免费额度为 1 GiB 存储 / 1 GiB 月流量，`02-code2/release/` 已占用约 0.9 GiB，接近上限。
-- 后续新增项目直接开新的 `chapters/04-xxx/` 目录提交即可。
+- 后续新增项目直接开新的 `chapters/05-xxx/` 目录提交即可。
