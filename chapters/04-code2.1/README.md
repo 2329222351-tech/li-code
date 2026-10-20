@@ -21,6 +21,61 @@ pnpm install
 pnpm dev          # http://localhost:3000
 ```
 
+## 换一台电脑怎么跑
+
+只需要 **Node.js ≥ 20** 和 **pnpm**，不需要数据库、不需要改配置。
+
+**1. 装运行时**
+
+```sh
+node -v              # 要 ≥ v20，推荐 22 LTS
+corepack enable      # 让 pnpm 随 Node 一起可用
+pnpm -v              # 确认能打印版本号
+```
+
+没装 pnpm 也可以 `npm i -g pnpm`。
+
+**2. 拷项目**
+
+把整个 `code2.1` 文件夹复制到新电脑，**但不要带这三个目录**（都是本机生成物，换个环境必须重装）：
+
+```
+node_modules/   .nuxt/   .output/
+```
+
+`server/data/questions.json`（题库）必须一起拷，丢了就没有题了。
+
+**3. 装依赖 + 启动**
+
+```sh
+cd code2.1
+pnpm install
+pnpm dev
+```
+
+浏览器打开 http://localhost:3000 即可。
+
+**不打包桌面版就跳过 Electron 下载**（可以省 ~100MB 和一次容易失败的下载）：
+
+```sh
+# PowerShell
+$env:ELECTRON_SKIP_BINARY_DOWNLOAD=1; pnpm install
+# bash / Git Bash
+ELECTRON_SKIP_BINARY_DOWNLOAD=1 pnpm install
+```
+
+**4. Windows 双击启动**
+
+项目根有两个 `.bat`，双击即可（首次会自动装依赖 / 构建）：
+
+- `start-dev.bat` —— 开发模式，改代码即时热更新
+- `start-prod.bat` —— 先构建再以生产模式跑，启动快、更省内存
+
+**要不要把进度一起搬过去？**
+
+进度存在 `server/data/progress.json`（`pnpm dev` 和 `start-prod.bat` 都是这个位置）。
+想让新电脑接着背，就把这个文件一起拷过去；不拷就是全新开始。
+
 ## 常用命令
 
 | 命令 | 作用 |
@@ -32,7 +87,60 @@ pnpm dev          # http://localhost:3000
 | `pnpm lint` | ESLint（flat config） |
 | `pnpm test` | Vitest（题库完整性 + 进度纯函数） |
 | `pnpm dev:electron` | 先 build 再用 Electron 开窗口 |
-| `pnpm dist:win` | 打 Windows NSIS 安装包 + portable exe 到 `release/` |
+| `pnpm dist:win` | 打单文件 portable exe 到 `release/` |
+| `pnpm dist:dir` | 只出 `win-unpacked/`（调试打包问题用，快） |
+
+## 打包成单文件 exe
+
+```sh
+pnpm dist:win
+# 或（不重新构建前端，只重打包）
+pnpm exec electron-builder --win portable --config electron-builder.json
+```
+
+产物：`release/学生手册背诵-1.0.0.exe`，**一个文件，69.6 MB**，双击即用。
+
+**国内网络注意**：electron-builder 首次要下载 NSIS 等打包工具，默认从 GitHub 拉会超时，加镜像：
+
+```sh
+ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ \
+  pnpm dist:win
+```
+
+**为什么是 portable 而不是绿色版文件夹**：portable 目标会把 `win-unpacked/` 整个用 7z 压进
+exe 的 NSIS 自解压壳里，运行时解压到 `%TEMP%` 再启动。所以它是真正的一个文件，
+代价是首次/每次启动多 5–10 秒解压。
+
+**打包结构**
+
+| 部分 | 位置 | 说明 |
+|---|---|---|
+| Electron 运行时 | exe 内 | 自带 Chromium + Node，目标机不需要装任何环境 |
+| 主进程代码 | `resources/app.asar` | 仅 `electron/*.mjs` + `package.json`，9 KB |
+| Nitro 服务端 | `resources/nitro/` | `.output` 通过 `extraResources` 拷出，**不能进 asar** |
+| 题库 | 打进 Nitro bundle | 静态 import，无需外部文件 |
+| 进度 | `<exe 同级>/data/progress.json` | 运行时生成 |
+
+> `.output` 之所以不能用 `asarUnpack`：asar 内的 `node_modules` 会被 electron-builder 的
+> 依赖规则过滤，Nitro 起来后 500。用 `extraResources` 拷到 `resources/nitro` 最稳，
+> 但目录名不能叫 `app`，否则 Electron 会把它当成未打包应用优先加载。
+
+**精简了什么**
+
+- `package.json` 的 `dependencies` 清空 —— 运行时依赖全被 Nitro 打进 `.output`，
+  electron-builder 因此不会把 771 MB 的 `node_modules` 塞进 exe
+- 移除未使用的 `@nuxt/eslint`（ESLint 走自写的 flat config，不需要 Nuxt 模块）
+- 生产构建关 sourcemap（`nitro.sourceMap: false` + `vite.build.sourcemap: false`）并关掉 devtools
+- `files` 只白名单 `electron/**` + `package.json`，`tests/`、`app/`、配置文件都不进包
+- `asar: true` + `compression: maximum`
+- `signAndEditExecutable: false`：跳过 rcedit/签名（见下方「已知限制」）
+
+**已知限制**
+
+- exe 未做代码签名，首次运行会被 Windows SmartScreen 拦一次，点「更多信息 → 仍要运行」。
+- `signAndEditExecutable: false` 是因为 electron-builder 解压 winCodeSign 时要为 macOS
+  的 dylib 建符号链接，非管理员/未开开发者模式会失败。影响：`resources` 里的内部 exe
+  保留 Electron 默认图标；外层 exe 的图标、版本号、产品名仍然是本项目的信息。
 
 ## 目录结构
 
@@ -54,6 +162,8 @@ server/api/bank.get.ts       题库接口
 server/api/progress.get.ts   读进度
 server/api/progress.post.ts  写进度（进程内互斥 + 原子替换）
 server/data/questions.json   题库（102 题）
+build/icon.ico           exe 图标（16–256 六个尺寸）
+start-dev.bat / start-prod.bat   Windows 双击启动
 tests/                   Vitest
 electron/                Electron 主进程 + preload
 ```

@@ -23,7 +23,7 @@ export function useBank() {
     loading.value = true
     error.value = null
     try {
-      const res = await $fetch<ApiResult<BankPayload>>('/api/bank')
+      const res = (await $fetch('/api/bank')) as ApiResult<BankPayload>
       if (res.ok) payload.value = res.data
       else error.value = res.error.message
     } catch (e) {

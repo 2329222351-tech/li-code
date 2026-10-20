@@ -3,43 +3,35 @@
   "productName": "学生手册背诵",
   "copyright": "Copyright © 2026",
   "asar": true,
-  "asarUnpack": [
-    ".output/**/*",
-    ".output/server/node_modules/**/*",
-    "node_modules/**/*"
-  ],
+  "compression": "maximum",
   "directories": {
     "output": "release",
     "buildResources": "build"
   },
   "files": [
     "electron/**/*",
-    ".output/**/*",
     "package.json"
   ],
+  "extraResources": [
+    {
+      "from": ".output",
+      "to": "nitro",
+      "filter": ["**/*"]
+    }
+  ],
   "win": {
+    "icon": "build/icon.ico",
     "target": [
-      {
-        "target": "nsis",
-        "arch": ["x64"]
-      },
       {
         "target": "portable",
         "arch": ["x64"]
       }
     ],
-    "artifactName": "reciter-${version}-${arch}.${ext}"
-  },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false,
-    "createDesktopShortcut": true,
-    "createStartMenuShortcut": true,
-    "shortcutName": "学生手册背诵"
+    "artifactName": "学生手册背诵-${version}.${ext}",
+    "signAndEditExecutable": false
   },
   "portable": {
-    "artifactName": "reciter-${version}-portable.${ext}"
+    "artifactName": "学生手册背诵-${version}.${ext}",
+    "requestExecutionLevel": "user"
   }
 }

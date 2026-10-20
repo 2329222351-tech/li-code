@@ -1,7 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const isProd = process.env.NODE_ENV === 'production'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
-  devtools: { enabled: true },
+
+  // 生产构建里不需要 devtools；它会把 Vue DevTools 的钩子打进产物
+  devtools: { enabled: !isProd },
 
   // TypeScript strict mode for safer code
   typescript: {
@@ -31,6 +35,14 @@ export default defineNuxtConfig({
   // Nitro (server)
   nitro: {
     devProxy: {},
+    // 打包产物里不带 sourcemap：省体积，也不把源码结构暴露在 exe 里
+    sourceMap: false,
+  },
+
+  vite: {
+    build: {
+      sourcemap: false,
+    },
   },
 
   // Runtime config

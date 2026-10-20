@@ -37,7 +37,7 @@ export function useProgress() {
     loading.value = true
     error.value = null
     try {
-      const res = await $fetch<ApiResult<ProgressFile>>('/api/progress')
+      const res = (await $fetch('/api/progress')) as ApiResult<ProgressFile>
       if (res.ok) file.value = sanitizeProgress(res.data)
       else error.value = res.error.message
     } catch (e) {
@@ -74,10 +74,10 @@ export function useProgress() {
     inflight = (async () => {
       saving.value = true
       try {
-        const res = await $fetch<ApiResult<ProgressFile>>('/api/progress', {
+        const res = (await $fetch('/api/progress', {
           method: 'POST',
           body: snapshot
-        })
+        })) as ApiResult<ProgressFile>
         if (res.ok) {
           lastSavedAt.value = res.data.updatedAt
           dirty.value = false

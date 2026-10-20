@@ -75,7 +75,14 @@ pnpm dev          # http://localhost:3000
 
 - `pnpm dev` — 浏览器开发（不启动 Electron）
 - `pnpm dev:electron` — 先 `nuxt build`，再 `electron .` 本地起窗口
-- `pnpm dist:win` — `nuxt build` + `electron-builder` 出 NSIS + portable exe 到 `release/`
+- `pnpm dist:win` — `nuxt build` + `electron-builder` 出**单文件 portable exe** 到 `release/`
+- `pnpm dist:dir` — 只出 `win-unpacked/`，排查打包问题时用（不压缩，快）
+- 国内网络：electron-builder 要拉 NSIS/winCodeSign，加
+  `ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/`
+- `.output` 走 `extraResources` 拷到 `resources/nitro`，**不要放 asar / asarUnpack**
+  （asar 里的 node_modules 会被依赖规则过滤，Nitro 起来直接 500）
+- `win.signAndEditExecutable: false`：非管理员环境解压 winCodeSign 会因 darwin 符号链接失败，
+  关掉 rcedit 才能稳定打包；图标/版本号由外层 NSIS exe 提供
 
 **数据目录策略**（`electron/main.mjs` 通过 `CODE21_DATA_DIR` 注入子进程 Nitro）：
 
@@ -83,7 +90,7 @@ pnpm dev          # http://localhost:3000
 |---|---|
 | dev | `<项目根>/server/data` |
 | portable exe | `<exe 同级>/data` |
-| NSIS 安装 | `%APPDATA%/学生手册背诵/data` |
+| 其他打包形态（如安装版） | `%APPDATA%/学生手册背诵/data` |
 
 题库打包进 Nitro bundle（静态 import），所以不需要 seed 文件；只有 `progress.json` 落在数据目录。
 
