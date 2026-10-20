@@ -25,11 +25,21 @@ li-code/
             ├── app/src/main/java/com/gpsroam/   Kotlin 源码
             ├── screenshots/                     界面截图
             └── ui-prototype/                    HTML 高保真原型
-    └── 04-code2.1/         ← 第四章（当前）
+    └── 04-code2.1/         ← 第四章
         ├── app/ components/ composables/   Nuxt 3 前端
         ├── server/                         Nitro 服务端 API 与题库
         ├── electron/                       Electron 主进程 / preload
-        └── tests/                          Vitest 单元测试
+        ├── tests/                          Vitest 单元测试
+        └── release/                        打包产物（单文件 exe）
+    └── 05-code3.1/         ← 第五章
+        ├── GpsPoint/                       Android 工程（GpsRoam 衍生版）
+        │   ├── app/src/main/java/com/gpspoint/   Kotlin 源码
+        │   ├── screenshots/                     界面截图
+        │   └── ui-prototype/                    HTML 高保真原型
+        └── GpsPoint-v1.1.apk                已构建 APK（5.3MB）
+    └── 06-code2.1e/        ← 第六章（当前）
+        ├── 学生手册背诵-1.0.0.exe            单文件绿色版（内置运行时）
+        └── 使用说明.txt                     使用说明
 ```
 
 ## 第一章 · 01-code1
@@ -87,8 +97,41 @@ GpsRoam —— Android 虚拟定位工具，通过官方 Mock Location 接口让
 - 服务端：`server/api/`（bank、progress）、`server/data/questions.json` 题库
 - 进度：`composables/useProgress.ts` + `server/utils/progressStore.ts`；个人进度不入库（见 `server/data/progress.json`）
 - 测试：`tests/bank.test.ts`、`tests/progress.test.ts`（Vitest）
+- 启动脚本：`start-dev.bat`（开发模式，自动装依赖）、`start-prod.bat`（生产模式）
+- 产物：`release/学生手册背诵-1.0.0.exe` 单文件绿色版（与 `06-code2.1e` 内为同一个 exe）；
+  `release/win-unpacked/` 是 electron-builder 解包中间产物，可重新生成，未入库
 
 本地开发：`pnpm install` → `pnpm dev`；测试：`pnpm test`。
+
+## 第五章 · 05-code3.1
+
+GpsPoint —— Android 虚拟定位工具，`03-code3`（GpsRoam）的衍生版本：同源思路、独立工程，
+两个章节互不覆盖。通过官方 Mock Location 接口把手机定位到指定地点。
+
+- `GpsPoint/app/src/main/java/com/gpspoint/`
+  - `mock/`：`MockLocationInjector.kt` 位置注入、`MockPermission.kt` 权限检测
+  - `data/`：`PointStore.kt` / `SavedPoint.kt` 收藏点本地存储
+  - `locate/`：`RealLocationFetcher.kt` 真实定位获取
+  - `service/`：`PointService.kt` 前台常驻服务
+  - `MainActivity.kt`：主界面
+- `screenshots/`：7 张界面截图
+- `ui-prototype/`：`index.html` 高保真 HTML 原型 + `ui-design.png`
+- `GpsPoint-v1.1.apk`：已构建安装包（5.3MB，普通文件入库）
+
+自用工具，需在开发者选项里把它选为「模拟位置信息应用」后才能生效。
+仓库内不含 `gradlew`，直接用 Android Studio 打开，或用本机 Gradle 构建。
+
+## 第六章 · 06-code2.1e
+
+`04-code2.1`（学生手册背诵）的**打包发行版**：单个 exe，不需要安装 Node.js、不需要联网，
+双击即用。首次打开会把内置运行环境解压到临时目录（约 5–10 秒），属正常现象。
+
+- `学生手册背诵-1.0.0.exe`：单文件绿色版（72.9MB，普通文件入库；未购买代码签名证书，
+  SmartScreen 首次会拦截，点「更多信息」→「仍要运行」即可）
+- `使用说明.txt`：数据存放位置、常见问题、快捷键说明
+
+进度数据保存在 exe 同级目录的 `data/` 文件夹（`progress.json` 背诵进度、`main.log` 启动日志），
+属于运行时个人数据，不入库（见 `.gitignore`）。
 
 ## 同步原则
 
@@ -101,15 +144,21 @@ GpsRoam —— Android 虚拟定位工具，通过官方 Mock Location 接口让
 - `02-code2/dist-fresh/`、`dist-out/`、`dist-out2/`、`dist-v3/`：electron-builder 中间产物（合计约 416MB）
 - `03-code3/GpsRoam/app/build/`（~37MB）、`.gradle/`、`local.properties`、`.cxx/` 等 Android 构建产物与本地环境配置
 - `04-code2.1/node_modules/`、`.nuxt/`、`.output/` 等 Nuxt/Electron 构建产物（合计约 460MB）
+- `04-code2.1/release/win-unpacked/`（~268MB）：electron-builder 解包中间产物，可由 exe 重新生成
 - `04-code2.1/server/data/progress.json`：个人背诵进度数据
+- `05-code3.1/GpsPoint/app/build/`、`.gradle/`、`local.properties`：Android 构建产物与本地环境配置
+- `06-code2.1e/data/`：运行时个人数据（背诵进度、启动日志）
 
 `02-code2/release/` 例外 —— 作为成品备份保留，但通过 **Git LFS** 跟踪：
 其中 `code2-portable-x64.zip`（323MB）、`code2.exe`（178MB）、`app.asar`（138MB×2）
 均超过 GitHub 单文件 100MB 硬限制。克隆时若未安装 git-lfs，这些文件只会是指针文本。
+
+`04-code2.1/release/学生手册背诵-1.0.0.exe` 与 `06-code2.1e/学生手册背诵-1.0.0.exe`
+（各 72.9MB）未超 100MB 硬限制，按普通文件入库，不占 LFS 额度。
 
 ## 注意事项
 
 - 仓库是 **Public**，请勿提交任何含密钥、token、个人隐私的内容。
 - `termux-tasker-master/` 是上游开源项目源码，仅供本地参考。
 - LFS 免费额度为 1 GiB 存储 / 1 GiB 月流量，`02-code2/release/` 已占用约 0.9 GiB，接近上限。
-- 后续新增项目直接开新的 `chapters/05-xxx/` 目录提交即可。
+- 后续新增项目直接开新的 `chapters/07-xxx/` 目录提交即可。
