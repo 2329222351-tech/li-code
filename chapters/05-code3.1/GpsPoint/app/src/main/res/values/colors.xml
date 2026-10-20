@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色：全屏只有一个主色 -->
+    <color name="brand">#185FA5</color>
+    <color name="brand_dark">#0C447C</color>
+    <color name="brand_weak">#EDF3FA</color>
+    <color name="brand_line">#D7E3F2</color>
+
+    <!-- 停止：与「录制中」同族的红，只出现在停止按钮上 -->
+    <color name="stop">#A32D2D</color>
+
+    <!-- 文字三级 + 分割线 + 页面底色 -->
+    <color name="ink">#2C2C2A</color>
+    <color name="ink2">#5F5E5A</color>
+    <color name="ink3">#888780</color>
+    <color name="ink4">#B4B2A9</color>
+    <color name="line">#E7E9EE</color>
+    <color name="page">#F4F5F7</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- 权限条：只在缺权限时出现 -->
+    <color name="warn_bg">#FAEEDA</color>
+    <color name="warn_ink">#633806</color>
+</resources>

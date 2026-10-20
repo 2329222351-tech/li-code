@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GPS 定点</string>
+
+    <!-- 主屏：状态区 -->
+    <string name="phase_idle">空闲</string>
+    <string name="phase_running">定位中</string>
+    <string name="line_idle">未应用 · 点一行即可定位</string>
+    <string name="line_empty">还没有点位</string>
+    <string name="line_running">%1$s · %2$s</string>
+    <string name="line_capturing">正在取定位…</string>
+    <string name="line_capturing_accuracy">正在取定位… ±%1$d m</string>
+
+    <!-- 主屏：点位区 -->
+    <string name="count_points">%1$d 个点位</string>
+    <string name="sec_points">点位</string>
+    <string name="hint_long_press">长按改名 / 删除</string>
+    <string name="hint_switch">点其他行可切换</string>
+    <string name="pill_in_use">使用中</string>
+
+    <!-- 主屏：空态 -->
+    <string name="empty_title">先采一个点位</string>
+    <string name="empty_desc">到你要定位的地方，点下面按钮，用手机真实 GPS 采一次。\n以后在哪都能一键定过来。</string>
+
+    <!-- 主屏：主按钮与脚注 -->
+    <string name="btn_capture">＋ 记录当前位置</string>
+    <string name="btn_stop">停止定位</string>
+    <string name="foot_idle">采集与定位互斥：定位中不能采集</string>
+    <string name="foot_capturing">正在向 GPS 要一次真实定位，最长等 15 秒</string>
+    <string name="foot_running">通知栏也能停止，不用回到 App</string>
+    <string name="foot_empty">坐标只存在本机，不联网</string>
+
+    <!-- 权限条 -->
+    <string name="banner_both">缺「精确定位」和「模拟位置」授权</string>
+    <string name="banner_mock">缺「模拟位置」授权 · 开发者选项里选中本应用</string>
+    <string name="banner_loc">缺「精确定位」权限 · 采集与定位都需要</string>
+    <string name="btn_go_settings">去设置</string>
+
+    <!-- 对话框 -->
+    <string name="dialog_save_title">保存点位</string>
+    <string name="dialog_save_hint">给点位起个名字</string>
+    <string name="dialog_save_msg">%1$s · 精度 ±%2$d m</string>
+    <string name="btn_rename">重命名</string>
+    <string name="btn_delete">删除点位</string>
+    <string name="msg_delete_confirm">删掉就找不回来了。</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_save">保存</string>
+    <string name="dialog_rename_hint">新的名字</string>
+
+    <!-- 提示 -->
+    <string name="msg_saved">已保存：%1$s</string>
+    <string name="msg_renamed">已改名</string>
+    <string name="msg_deleted">已删除</string>
+    <string name="msg_need_mock">还没授权「模拟位置」：开发者选项 → 选择模拟位置信息应用</string>
+    <string name="msg_need_loc">需要「精确定位」权限</string>
+    <string name="msg_fix_timeout">没收到定位，到空旷处再试</string>
+    <string name="msg_service">服务还没就绪，稍后再试</string>
+    <string name="msg_switched">已切换到 %1$s</string>
+    <string name="msg_apply_failed">无法启动模拟定位</string>
+    <string name="msg_push_failed">写入位置失败，已停止</string>
+    <string name="msg_capturing">正在采集定位，稍等一下</string>
+    <string name="msg_no_provider">系统定位服务没开</string>
+    <string name="msg_enable_dev_first">先开开发者选项：设置 → 关于手机 → 连点「版本号」7 次</string>
+
+    <!-- 点位默认名与格式化 -->
+    <string name="default_point_name">点位 %1$s</string>
+    <string name="point_meta">精度 %1$s · %2$s 采集</string>
+    <string name="accuracy_value">±%1$d m</string>
+    <string name="accuracy_unknown">精度未知</string>
+
+    <!-- 前台服务通知 -->
+    <string name="notif_channel_name">模拟定位</string>
+    <string name="notif_channel_desc">常驻通知，用于一键停止模拟定位</string>
+    <string name="notif_running">定位中：%1$s</string>
+    <string name="notif_stop">停止</string>
+</resources>

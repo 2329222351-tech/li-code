@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPS 定点 · UI 原型（简化版）</title>
+<style>
+  /* ---------- 设计令牌：与 app/src/main/res/values/colors.xml 一一对应 ---------- */
+  :root{
+    --brand:#185FA5;
+    --brand-dark:#0C447C;
+    --brand-weak:#EDF3FA;
+    --brand-line:#D7E3F2;
+
+    --red:#A32D2D;
+    --red-dark:#8A2626;
+
+    --ink:#2C2C2A;
+    --ink2:#5F5E5A;
+    --ink3:#888780;
+    --ink4:#B4B2A9;
+
+    --page:#F4F5F7;
+    --card:#FFFFFF;
+    --line:#E7E9EE;
+
+    --warn-bg:#FAEEDA;
+    --warn-ink:#633806;
+    --ok:#0F6E56;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    background:var(--page);
+    color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans SC","Microsoft YaHei",sans-serif;
+    padding:40px 32px 56px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- 页面说明 ---------- */
+  .page-head{max-width:1240px;margin:0 auto 30px}
+  .page-head h1{font-size:22px;letter-spacing:.2px}
+  .page-head .sub{margin-top:8px;font-size:13px;line-height:1.8;color:var(--ink2)}
+  .page-head .sub b{color:var(--brand)}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;
+       background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+
+  /* ---------- 机框 ---------- */
+  .frames{max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;gap:34px 30px;justify-content:flex-start}
+  figure{width:360px}
+  figcaption{margin-top:14px;font-size:12.5px;color:var(--ink2);line-height:1.7}
+  figcaption b{display:block;color:var(--ink);font-size:13px;font-weight:600;margin-bottom:2px}
+
+  .device{
+    position:relative;width:360px;height:780px;background:#fff;
+    border:1px solid #E2E5EA;border-radius:34px;overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:0 16px 40px rgba(16,24,40,.10);
+  }
+
+  /* 状态栏（示意，不属于 App 内容） */
+  .statusbar{
+    flex:none;height:30px;padding:0 20px;display:flex;align-items:center;
+    justify-content:space-between;font-size:11px;font-weight:600;color:var(--ink);
+  }
+  .statusbar .right{display:flex;align-items:center;gap:5px}
+  .bars{display:flex;align-items:flex-end;gap:2px;height:9px}
+  .bars i{width:2.5px;background:var(--ink);border-radius:1px;display:block}
+  .bars i:nth-child(1){height:3px}.bars i:nth-child(2){height:5px}
+  .bars i:nth-child(3){height:7px}.bars i:nth-child(4){height:9px}
+  .batt{width:18px;height:9px;border:1px solid var(--ink);border-radius:2px;position:relative}
+  .batt::after{content:"";position:absolute;inset:1.5px;right:4px;background:var(--ink);border-radius:1px}
+
+  /* 屏幕内容 */
+  .screen{flex:1;min-height:0;display:flex;flex-direction:column;padding:6px 20px 14px}
+
+  /* 顶栏 */
+  .apphead{flex:none;display:flex;align-items:baseline;justify-content:space-between}
+  .apphead .title{font-size:17px;font-weight:700;letter-spacing:.2px}
+  .apphead .count{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--ink3)}
+
+  /* 状态区：状态名 + 状态行，高度恒定，切换状态时不跳 */
+  .status{flex:none;margin-top:16px}
+  .phase{font-size:26px;font-weight:700;line-height:1.2;letter-spacing:.3px;color:var(--ink)}
+  .phase.run{color:var(--brand)}
+  .phaseline{margin-top:6px;font-family:ui-monospace,Consolas,monospace;font-size:12px;
+             color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* 权限条：只在缺权限时出现 */
+  .banner{flex:none;margin-top:14px;background:var(--warn-bg);border-radius:10px;
+          padding:8px 6px 8px 13px;display:flex;align-items:center;gap:6px}
+  .banner .txt{flex:1;font-size:11.5px;line-height:1.5;color:var(--warn-ink)}
+  .banner .act{flex:none;font-size:11.5px;font-weight:600;color:var(--warn-ink);
+               background:rgba(99,56,6,.09);border-radius:8px;padding:7px 10px}
+
+  /* 分组标题 */
+  .sechead{flex:none;margin-top:22px;display:flex;align-items:center;justify-content:space-between}
+  .sechead .t{font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:.6px}
+  .sechead .hint{font-size:11px;color:var(--ink4)}
+
+  /* 点位列表 */
+  .list{flex:1;min-height:0;margin-top:10px;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+  .row{flex:none;display:flex;align-items:flex-start;gap:10px;padding:13px 14px;
+       background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .row.active{background:var(--brand-weak);border-color:var(--brand-line)}
+  .row .body{flex:1;min-width:0}
+  .row .name{font-size:16px;font-weight:600;color:var(--ink);
+             white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row.active .name{color:var(--brand)}
+  .row .coord{margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:12px;
+              color:var(--ink2);letter-spacing:.1px}
+  .row .meta{margin-top:5px;font-size:11px;color:var(--ink3)}
+  .row .tail{flex:none;display:flex;align-items:center;gap:6px;align-self:center}
+  .pill{font-size:10.5px;font-weight:600;color:#fff;background:var(--brand);
+        border-radius:999px;padding:3px 8px;white-space:nowrap}
+  .chev{color:var(--ink4);font-size:17px;line-height:1}
+
+  /* 空态：在列表区里垂直居中，不贴着状态栏留一大块空白 */
+  .empty-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  .empty{width:100%;padding:30px 20px;border:1px dashed #D8DCE3;
+         border-radius:16px;background:#FAFBFC;text-align:center}
+  .empty .ico{color:var(--ink4);margin-bottom:12px}
+  .empty h3{font-size:15px;font-weight:600;color:var(--ink)}
+  .empty p{margin-top:8px;font-size:12px;line-height:1.75;color:var(--ink3)}
+
+  /* 主按钮：永远在同一个位置，内容随状态换 */
+  .primary{flex:none;margin-top:16px;height:58px;border-radius:14px;background:var(--brand);
+           color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;
+           justify-content:center;gap:9px;letter-spacing:.3px}
+  .primary.stop{background:var(--red)}
+  .primary .plus{font-size:22px;font-weight:400;line-height:0;margin-top:-2px}
+
+  .foot{flex:none;margin-top:9px;text-align:center;font-size:11px;color:var(--ink4)}
+
+  /* 对话框层 */
+  .overlay{position:absolute;inset:0;background:rgba(20,24,32,.42);
+           display:flex;align-items:center;justify-content:center;padding:24px}
+  .dialog{width:100%;background:#fff;border-radius:20px;padding:20px 20px 8px;
+          box-shadow:0 22px 48px rgba(16,24,40,.22)}
+  .dialog h2{font-size:16.5px;font-weight:600}
+  .dialog .field{margin-top:16px;height:44px;border:1px solid var(--line);border-radius:10px;
+                 display:flex;align-items:center;padding:0 12px;font-size:14px;color:var(--ink)}
+  .dialog .field .caret{display:inline-block;width:1px;height:16px;background:var(--brand);margin-left:2px}
+  .dialog .preview{margin-top:10px;font-family:ui-monospace,Consolas,monospace;
+                   font-size:11.5px;color:var(--ink3);line-height:1.6}
+  .dialog .actions{display:flex;justify-content:flex-end;gap:4px;margin-top:8px}
+  .dialog .actions span{font-size:14px;font-weight:600;padding:11px 14px;border-radius:10px;color:var(--brand)}
+  .dialog .actions span.plain{color:var(--ink2);font-weight:500}
+  .dialog .actions span.danger{color:var(--red)}
+
+  .sheet{width:100%;background:#fff;border-radius:16px;overflow:hidden;
+         box-shadow:0 22px 48px rgba(16,24,40,.22)}
+  .sheet .item{padding:16px 20px;font-size:15px;color:var(--ink);border-bottom:1px solid var(--line)}
+  .sheet .item.danger{color:var(--red)}
+  .sheet .item.cancel{border-bottom:0;color:var(--ink2);text-align:center;font-weight:500}
+
+  /* 说明卡 */
+  .notes{max-width:1240px;margin:42px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .note{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .note h4{font-size:13px;font-weight:700;margin-bottom:9px}
+  .note p{font-size:12.5px;line-height:1.75;color:var(--ink2)}
+  .note p + p{margin-top:7px}
+  .note code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--brand)}
+  @media (max-width:1240px){ .notes{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <h1>GPS 定点 · UI 原型（简化版）</h1>
+  <p class="sub">
+    只做一件事：<b>提前用手机采一个真实定位点，需要时一键把手机定位定到那儿。</b>
+    一个界面、一个主按钮、一份点位列表。没有地图、没有路线、没有轨迹回放、没有倍速。
+  </p>
+</header>
+
+<main class="frames">
+
+  <!-- ============ 1. 空闲 · 有点位 ============ -->
+  <figure>
+    <div class="device">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="right"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span>
+      </div>
+      <div class="screen">
+        <div class="apphead">
+          <span class="title">GPS 定点</span>
+          <span class="count">3 个点位</span>
+        </div>
+
+        <div class="status">
+          <div class="phase">空闲</div>
+          <div class="phaseline">未应用 · 点一行即可定位</div>
+        </div>
+
+        <div class="sechead">
+          <span class="t">点位</span>
+          <span class="hint">长按可改名 / 删除</span>
+        </div>
+
+        <div class="list">
+          <div class="row">
+            <div class="body">
+              <div class="name">公司</div>
+              <div class="coord">30.274149, 120.155030</div>
+              <div class="meta">精度 ±6 m · 09-24 09:12 采集</div>
+            </div>
+            <div class="tail"><span class="chev">›</span></div>
+          </div>
+          <div class="row">
+            <div class="body">
+              <div class="name">家</div>
+              <div class="coord">30.287020, 120.132110</div>
+              <div class="meta">精度 ±9 m · 09-23 21:40 采集</div>
+            </div>
+            <div class="tail"><span class="chev">›</span></div>
+          </div>
+          <div class="row">
+            <div class="body">
+              <div class="name">健身房</div>
+              <div class="coord">30.280380, 120.168470</div>
+              <div class="meta">精度 ±12 m · 09-21 18:05 采集</div>
+            </div>
+            <div class="tail"><span class="chev">›</span></div>
+          </div>
+        </div>
+
+        <div class="primary"><span class="plus">＋</span>记录当前位置</div>
+        <div class="foot">采集与定位互斥：定位中不能采集</div>
+      </div>
+    </div>
+    <figcaption>
+      <b>1 / 空闲 · 有点位</b>
+      主屏就是点位列表。点一行 = 立刻把定位定过去，不弹确认。
+    </figcaption>
+  </figure>
+
+  <!-- ============ 2. 定位中 ============ -->
+  <figure>
+    <div class="device">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="right"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span>
+      </div>
+      <div class="screen">
+        <div class="apphead">
+          <span class="title">GPS 定点</span>
+          <span class="count">3 个点位</span>
+        </div>
+
+        <div class="status">
+          <div class="phase run">定位中</div>
+          <div class="phaseline">公司 · 30.274149, 120.155030 · ±6m</div>
+        </div>
+
+        <div class="sechead">
+          <span class="t">点位</span>
+          <span class="hint">点其他行可切换</span>
+        </div>
+
+        <div class="list">
+          <div class="row active">
+            <div class="body">
+              <div class="name">公司</div>
+              <div class="coord">30.274149, 120.155030</div>
+              <div class="meta">精度 ±6 m · 09-24 09:12 采集</div>
+            </div>
+            <div class="tail"><span class="pill">使用中</span></div>
+          </div>
+          <div class="row">
+            <div class="body">
+              <div class="name">家</div>
+              <div class="coord">30.287020, 120.132110</div>
+              <div class="meta">精度 ±9 m · 09-23 21:40 采集</div>
+            </div>
+            <div class="tail"><span class="chev">›</span></div>
+          </div>
+          <div class="row">
+            <div class="body">
+              <div class="name">健身房</div>
+              <div class="coord">30.280380, 120.168470</div>
+              <div class="meta">精度 ±12 m · 09-21 18:05 采集</div>
+            </div>
+            <div class="tail"><span class="chev">›</span></div>
+          </div>
+        </div>
+
+        <div class="primary stop">停止定位</div>
+        <div class="foot">通知栏也能停止，不用回到 App</div>
+      </div>
+    </div>
+    <figcaption>
+      <b>2 / 定位中</b>
+      状态名变蓝，主按钮原地变成红色「停止定位」。列表里点别的点 = 直接切过去。
+    </figcaption>
+  </figure>
+
+  <!-- ============ 3. 空态 ============ -->
+  <figure>
+    <div class="device">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="right"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span>
+      </div>
+      <div class="screen">
+        <div class="apphead">
+          <span class="title">GPS 定点</span>
+          <span class="count">0 个点位</span>
+        </div>
+
+        <div class="status">
+          <div class="phase">空闲</div>
+          <div class="phaseline">还没有点位</div>
+        </div>
+
+        <div class="empty-wrap">
+          <div class="empty">
+            <div class="ico">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/>
+                <circle cx="12" cy="10" r="2.6"/>
+              </svg>
+            </div>
+            <h3>先采一个点位</h3>
+            <p>到你要定位的地方，点下面按钮，<br>用手机真实 GPS 采一次。<br>以后在哪都能一键定过来。</p>
+          </div>
+        </div>
+
+        <div class="primary"><span class="plus">＋</span>记录当前位置</div>
+        <div class="foot">坐标只存在本机，不联网</div>
+      </div>
+    </div>
+    <figcaption>
+      <b>3 / 空态</b>
+      没有点位时列表位置换成一句话说明，主按钮位置不变 —— 闭着眼也知道按钮在哪。
+    </figcaption>
+  </figure>
+
+  <!-- ============ 4. 采集命名 ============ -->
+  <figure>
+    <div class="device">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="right"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span>
+      </div>
+      <div class="screen">
+        <div class="apphead">
+          <span class="title">GPS 定点</span>
+          <span class="count">3 个点位</span>
+        </div>
+        <div class="status">
+          <div class="phase">空闲</div>
+          <div class="phaseline">正在取定位… ±23 m</div>
+        </div>
+        <div class="sechead"><span class="t">点位</span><span class="hint">长按可改名 / 删除</span></div>
+        <div class="list">
+          <div class="row"><div class="body"><div class="name">公司</div>
+            <div class="coord">30.274149, 120.155030</div>
+            <div class="meta">精度 ±6 m · 09-24 09:12 采集</div></div>
+          <div class="tail"><span class="chev">›</span></div></div>
+          <div class="row"><div class="body"><div class="name">家</div>
+            <div class="coord">30.287020, 120.132110</div>
+            <div class="meta">精度 ±9 m · 09-23 21:40 采集</div></div>
+          <div class="tail"><span class="chev">›</span></div></div>
+        </div>
+        <div class="primary"><span class="plus">＋</span>记录当前位置</div>
+      </div>
+
+      <div class="overlay">
+        <div class="dialog">
+          <h2>保存点位</h2>
+          <div class="preview" style="margin-top:12px">30.274149, 120.155030 · 精度 ±6 m</div>
+          <div class="field" style="margin-top:14px">点位 09-24 15:32<span class="caret"></span></div>
+          <div class="actions">
+            <span class="plain">取消</span>
+            <span>保存</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>
+      <b>4 / 采集 · 命名弹窗</b>
+      取到定位后自动填好默认名（<code>点位 09-24 15:32</code>），名字可以不改直接保存。
+    </figcaption>
+  </figure>
+
+  <!-- ============ 5. 长按菜单 ============ -->
+  <figure>
+    <div class="device">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="right"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span>
+      </div>
+      <div class="screen">
+        <div class="apphead">
+          <span class="title">GPS 定点</span>
+          <span class="count">3 个点位</span>
+        </div>
+        <div class="status">
+          <div class="phase">空闲</div>
+          <div class="phaseline">未应用 · 点一行即可定位</div>
+        </div>
+        <div class="sechead"><span class="t">点位</span><span class="hint">长按可改名 / 删除</span></div>
+        <div class="list">
+          <div class="row"><div class="body"><div class="name">公司</div>
+            <div class="coord">30.274149, 120.155030</div>
+            <div class="meta">精度 ±6 m · 09-24 09:12 采集</div></div>
+          <div class="tail"><span class="chev">›</span></div></div>
+          <div class="row"><div class="body"><div class="name">家</div>
+            <div class="coord">30.287020, 120.132110</div>
+            <div class="meta">精度 ±9 m · 09-23 21:40 采集</div></div>
+          <div class="tail"><span class="chev">›</span></div></div>
+          <div class="row"><div class="body"><div class="name">健身房</div>
+            <div class="coord">30.280380, 120.168470</div>
+            <div class="meta">精度 ±12 m · 09-21 18:05 采集</div></div>
+          <div class="tail"><span class="chev">›</span></div></div>
+        </div>
+        <div class="primary"><span class="plus">＋</span>记录当前位置</div>
+      </div>
+
+      <div class="overlay">
+        <div class="sheet">
+          <div class="item">重命名</div>
+          <div class="item danger">删除点位</div>
+          <div class="item cancel">取消</div>
+        </div>
+      </div>
+    </div>
+    <figcaption>
+      <b>5 / 长按点位</b>
+      只有两个动作。删除要二次确认，重命名直接改。
+    </figcaption>
+  </figure>
+
+  <!-- ============ 6. 缺权限 ============ -->
+  <figure>
+    <div class="device">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="right"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span>
+      </div>
+      <div class="screen">
+        <div class="apphead">
+          <span class="title">GPS 定点</span>
+          <span class="count">3 个点位</span>
+        </div>
+
+        <div class="status">
+          <div class="phase">空闲</div>
+          <div class="phaseline">未应用 · 缺「模拟位置」授权</div>
+        </div>
+
+        <div class="banner">
+          <span class="txt">缺「模拟位置」授权 · 开发者选项里选中本应用</span>
+          <span class="act">去设置</span>
+        </div>
+
+        <div class="sechead"><span class="t">点位</span><span class="hint">长按可改名 / 删除</span></div>
+        <div class="list">
+          <div class="row"><div class="body"><div class="name">公司</div>
+            <div class="coord">30.274149, 120.155030</div>
+            <div class="meta">精度 ±6 m · 09-24 09:12 采集</div></div>
+          <div class="tail"><span class="chev">›</span></div></div>
+          <div class="row"><div class="body"><div class="name">家</div>
+            <div class="coord">30.287020, 120.132110</div>
+            <div class="meta">精度 ±9 m · 09-23 21:40 采集</div></div>
+          <div class="tail"><span class="chev">›</span></div></div>
+        </div>
+
+        <div class="primary"><span class="plus">＋</span>记录当前位置</div>
+        <div class="foot">权限齐了这条黄条整条消失</div>
+      </div>
+    </div>
+    <figcaption>
+      <b>6 / 缺权限</b>
+      黄色权限条只在缺权限时出现，一行字 + 一个跳转按钮，齐了整条隐藏。
+    </figcaption>
+  </figure>
+
+</main>
+
+<section class="notes">
+  <div class="note">
+    <h4>只有一个界面</h4>
+    <p>点位列表就是主界面，没有第二个 Activity、没有 tab、没有抽屉、没有设置页。</p>
+    <p>主按钮位置固定：空闲＝记录当前位置，定位中＝停止定位。只有文案和颜色变，几何尺寸不变。</p>
+  </div>
+  <div class="note">
+    <h4>两种操作，互斥</h4>
+    <p><code>采集</code>：读手机真实 GPS，存成本地点位。<code>应用</code>：把假坐标写进系统定位。</p>
+    <p>注入会注册名为 <code>gps</code> 的测试 Provider 顶掉真实 GPS，此时采集只会采到假坐标 —— 所以定位中隐藏采集入口，先停再采。</p>
+  </div>
+  <div class="note">
+    <h4>刻意不做</h4>
+    <p>地图、选点画布、路线规划、轨迹录制与回放、倍速、摇杆、GPX、云同步、账号、分享、设置页。</p>
+    <p>列表行只放三样：名字、经纬度、精度与采集时间。不放大段说明、不放插图。</p>
+  </div>
+</section>
+
+</body>
+</html>

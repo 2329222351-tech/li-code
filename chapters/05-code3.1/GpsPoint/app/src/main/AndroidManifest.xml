@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 采集真实定位要精确定位；定位注入时 location 型前台服务也要求已持有它 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Android 13+ 常驻通知要运行时授权；不给只是看不到通知，服务照常跑 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+      这个权限在 API 23+ 已废弃、也不会真正授予，但**必须声明**：
+      「开发者选项 → 选择模拟位置应用」的候选列表是按「应用是否声明了
+      ACCESS_MOCK_LOCATION」筛的（AOSP 与多数国产 ROM 都这样）。
+      不声明，本应用根本不出现在列表里，用户只能在 OEM 的 UI 外想办法（adb appops）。
+      真正生效的授权仍然是 AppOps 的 mock_location，由用户在上面那个列表里选中本应用时写入。
+    -->
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+
+    <!-- 注意：没有 INTERNET 权限。点位只存在本机，想上传也上传不了。 -->
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.GpsPoint">
+
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".service.PointService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+    </application>
+
+</manifest>
