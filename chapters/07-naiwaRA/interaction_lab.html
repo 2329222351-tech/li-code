@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>奶蛙 · 道具交互实验台 INTERACTION LAB</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0c0e0a;font-family:Consolas,"SF Mono",Menlo,monospace;}
+  #view{width:100%;height:100%;display:block;}
+  #title{position:fixed;top:12px;left:14px;z-index:20;color:#b7c9a0;font-size:11px;letter-spacing:.14em;line-height:1.9;text-shadow:0 1px 2px #000;pointer-events:none;}
+  #title b{color:#e6e2cf;font-size:14px;letter-spacing:.22em;}
+  #panel{position:fixed;top:12px;right:12px;z-index:20;width:230px;background:rgba(9,11,9,.9);
+    border:1px solid #3a5230;color:#cbd6bd;font-size:11px;padding:10px 12px;max-height:calc(100vh - 24px);overflow-y:auto;}
+  #panel .p-clock{color:#e8c02a;font-size:17px;letter-spacing:.18em;text-align:center;margin-bottom:8px;font-variant-numeric:tabular-nums;}
+  #panel .p-bar{display:flex;align-items:center;gap:6px;margin:5px 0;color:#a9b39c;}
+  #panel .p-bar span{width:32px;}
+  #panel .p-bar i{display:block;height:7px;background:#86c24b;max-width:110px;}
+  #panel .p-bar.lac i{background:#e06b9e;}
+  #panel .p-bar b{margin-left:auto;color:#e6e2cf;font-weight:500;}
+  #panel .p-sec{color:#9fc273;letter-spacing:.2em;font-size:10px;margin:10px 0 4px;border-bottom:1px solid #263021;padding-bottom:3px;}
+  #panel .p-list{line-height:1.8;color:#b9c4a8;}
+  #panelBtns{position:fixed;top:12px;right:250px;z-index:20;display:flex;flex-direction:column;gap:6px;}
+  #panelBtns button{font-family:inherit;font-size:10.5px;cursor:pointer;background:#1b2415;color:#bcd4a2;
+    border:1px solid #465c33;padding:6px 10px;letter-spacing:.05em;}
+  #panelBtns button:hover{background:#2b3a1e;border-color:#86c24b;}
+  #keys{position:fixed;left:14px;bottom:12px;z-index:20;color:#8fa07f;font-size:10.5px;line-height:1.9;pointer-events:none;text-shadow:0 1px 2px #000;}
+  #touch{position:fixed;left:14px;bottom:64px;z-index:22;display:none;grid-template-columns:repeat(3,40px);grid-auto-rows:40px;gap:4px;}
+  #touch button,#actBtns button{font-family:inherit;font-size:14px;background:rgba(12,16,10,.75);color:#c6d9ad;
+    border:1px solid #5c7a3e;cursor:pointer;user-select:none;touch-action:none;padding:0;}
+  #actBtns{position:fixed;right:14px;bottom:14px;z-index:22;display:none;gap:6px;}
+  #actBtns button{width:56px;height:56px;font-size:12px;}
+  #actBtns button.hold,#touch button.hold{background:#86c24b;color:#0d1108;}
+  @media (pointer:coarse){#touch{display:grid;}#actBtns{display:flex;}#keys{display:none;}}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="title"><b>道具交互实验台</b><br>INTERACTION LAB · 单独验证每个道具，再接入三幕场景<br>走近道具 → 按 E 交互</div>
+<div id="panelBtns">
+  <button id="btnReset">重置实验台</button>
+  <button id="btnClear">清除结局记录</button>
+</div>
+<div id="panel"></div>
+<div id="keys">WASD 移动 · 拖拽环视 · E 交互 · F 手电 · 按住空格 装死<br>
+阀门配方：草莓 3 圈 · 巧克力 2 圈 · 薄荷 1 圈（线索来自磁带）</div>
+<div id="touch">
+  <span></span><button data-k="KeyW">▲</button><span></span>
+  <button data-k="KeyA">◀</button><button data-k="KeyS">▼</button><button data-k="KeyD">▶</button>
+</div>
+<div id="actBtns">
+  <button data-k="KeyF">F<br>手电</button>
+  <button data-k="Space">装死</button>
+  <button id="btnE">E<br>交互</button>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="assets/interaction.js"></script>
+<script>
+(function(){
+"use strict";
+MF.initUI();
+MF.bindPanel(document.getElementById("panel"));
+
+/* ===== 渲染基础 ===== */
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("view"),antialias:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight,false);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x14160f);
+scene.fog=new THREE.FogExp2(0x14160f,0.028);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,0.05,120);
+camera.rotation.order="YXZ";
+let yaw=0,pitch=0;
+camera.position.set(0,1.4,12);
+scene.add(camera);
+scene.add(new THREE.AmbientLight(0xcfd8b0,0.55));
+const hemi=new THREE.HemisphereLight(0xe8e4cf,0x3a4028,0.5);scene.add(hemi);
+[[-10,-6],[8,-6],[0,6],[12,8]].forEach(p=>{
+  const L=new THREE.PointLight(0xffc766,0.85,16,1.6);L.position.set(p[0],3.6,p[1]);scene.add(L);
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.1,6,5),new THREE.MeshBasicMaterial({color:0xffd98a}));
+  bulb.position.copy(L.position);scene.add(bulb);
+});
+// 手电（拾取后可用）
+const flash=new THREE.SpotLight(0xeaffc0,0,14,0.5,0.45,1.2);
+flash.position.set(0.15,-0.1,0);camera.add(flash);
+flash.target.position.set(0,-0.15,-4);camera.add(flash.target);
+
+const lam=(c,opt)=>new THREE.MeshLambertMaterial(Object.assign({color:c},opt||{}));
+const bas=(c,opt)=>new THREE.MeshBasicMaterial(Object.assign({color:c},opt||{}));
+function labelSprite(text,x,y,z,w){
+  const c=document.createElement("canvas");c.width=512;c.height=80;const g=c.getContext("2d");
+  g.fillStyle="rgba(10,14,8,0.85)";g.fillRect(0,0,512,80);
+  g.strokeStyle="#86c24b";g.lineWidth=4;g.strokeRect(4,4,504,72);
+  g.fillStyle="#e6e2cf";g.font="bold 30px monospace";g.textAlign="center";g.textBaseline="middle";
+  g.fillText(text,256,42);
+  const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));
+  s.scale.set(w||3,0.47,1);s.position.set(x,y,z);scene.add(s);return s;
+}
+
+/* ===== 房间 ===== */
+const W=36,D=28;
+const floorC=document.createElement("canvas");floorC.width=floorC.height=128;
+(function(g){g.fillStyle="#8a8a72";g.fillRect(0,0,128,128);
+  g.strokeStyle="rgba(20,20,16,.4)";g.lineWidth=2;
+  for(let i=0;i<=4;i++){g.beginPath();g.moveTo(i*32,0);g.lineTo(i*32,128);g.stroke();g.beginPath();g.moveTo(0,i*32);g.lineTo(128,i*32);g.stroke();}
+  for(let i=0;i<240;i++){g.fillStyle="rgba(40,44,28,"+(Math.random()*0.25)+")";g.fillRect(Math.random()*128|0,Math.random()*128|0,2,2);}
+})(floorC.getContext("2d"));
+const floorTex=new THREE.CanvasTexture(floorC);floorTex.wrapS=floorTex.wrapT=THREE.RepeatWrapping;floorTex.repeat.set(9,7);
+floorTex.magFilter=THREE.NearestFilter;
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(W,D),lam(0xbfc0a8,{map:floorTex}));
+floor.rotation.x=-Math.PI/2;scene.add(floor);
+const wallMat=lam(0x9aa07a);
+[[0,-D/2,W,0],[0,D/2,W,Math.PI],[-W/2,0,D,Math.PI/2],[W/2,0,D,-Math.PI/2]].forEach(w=>{
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w[2],4.5),wallMat);
+  m.position.set(w[0],2.25,w[1]);m.rotation.y=w[3];scene.add(m);
+});
+const ceil=new THREE.Mesh(new THREE.PlaneGeometry(W,D),lam(0x565a48));
+ceil.rotation.x=Math.PI/2;ceil.position.y=4.5;scene.add(ceil);
+
+/* ===== 交互标记环 ===== */
+const updaters=[];
+const ring=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.035,6,24),bas(0x86c24b));
+ring.rotation.x=-Math.PI/2;ring.position.y=0.04;ring.visible=false;scene.add(ring);
+
+/* ===== 通用小道具构造 ===== */
+function crate(x,z){const m=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.7,0.9),lam(0x7a6f5c));m.position.set(x,0.35,z);scene.add(m);return m;}
+function bottleMesh(color){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.13,0.4,8),lam(color));body.position.y=0.2;g.add(body);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.1,8),lam(0xe6e2cf));cap.position.y=0.45;g.add(cap);
+  return g;
+}
+function tapeMesh(){const m=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.06,0.2),lam(0x5a4030));
+  const lb=new THREE.Mesh(new THREE.PlaneGeometry(0.24,0.12),bas(0xe8d8a0));lb.rotation.x=-Math.PI/2;lb.position.y=0.032;m.add(lb);return m;}
+function coinMesh(){const m=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,0.025,10),lam(0xe8c02a));return m;}
+function keyMesh(){
+  const g=new THREE.Group();
+  const r=new THREE.Mesh(new THREE.TorusGeometry(0.07,0.02,5,10),bas(0xe8c02a));r.rotation.x=Math.PI/2;g.add(r);
+  const s=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.025,0.2),bas(0xe8c02a));s.position.z=0.14;g.add(s);
+  return g;
+}
+
+/* ============================================================
+ * 道具 1：奶瓶手电（拾取 → F 开关 → 耗奶量 → 照停奶渍怪）
+ * ============================================================ */
+crate(-14,-9);
+const flashProp=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.09,0.5,8),lam(0xe6e2cf));
+flashProp.rotation.z=Math.PI/2;flashProp.position.set(-14,0.78,-9);scene.add(flashProp);
+labelSprite("奶瓶手电", -14,2.1,-9);
+MF.register({id:"flashlight",pos:{x:-14,z:-9},
+  label:()=>MF.state.inv.flashlight?null:"拾取 奶瓶手电",
+  action(){MF.state.inv.flashlight=true;flashProp.visible=false;
+    MF.toast("奶瓶手电到手。按 F 开关——奶量就是电量。");MF.refreshPanel();}});
+
+/* ============================================================
+ * 道具 2：硬币 ×2
+ * ============================================================ */
+[[-14,-5],[-11,-3]].forEach((p,i)=>{
+  const c=coinMesh();c.position.set(p[0],0.06,p[1]);scene.add(c);
+  const spin=t=>{c.rotation.y=t*1.5;};
+  updaters.push(spin);
+  MF.register({id:"coin"+i,pos:{x:p[0],z:p[1]},radius:1.6,
+    label:()=>c.visible?"拾取 硬币":null,
+    action(){c.visible=false;MF.state.inv.coin++;MF.toast("硬币 +1（哞哞酱收这个）");MF.refreshPanel();}});
+});
+labelSprite("硬币", -13,1.6,-4,2);
+
+/* ============================================================
+ * 道具 3：哞哞酱售货机（投币 → 假提示对话 → 全结局彩蛋）
+ * ============================================================ */
+const vend=new THREE.Mesh(new THREE.BoxGeometry(1.1,2.1,0.8),lam(0xd9cf6a));
+vend.position.set(-14,1.05,0);vend.rotation.y=0.2;scene.add(vend);
+const vendFace=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.8),bas(0x2a2416));
+vendFace.position.set(0,0.35,0.41);vend.add(vendFace);
+const vendEyeM=bas(0xe8c02a);
+[[-0.18],[0.18]].forEach(e=>{const m=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.1,0.02),vendEyeM);m.position.set(e[0],0.1,0.02);vendFace.add(m);});
+const vendMouth=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.05,0.02),vendEyeM);vendMouth.position.set(0,-0.15,0.02);vendFace.add(vendMouth);
+labelSprite("哞哞酱售货机", -14,2.7,0);
+MF.register({id:"vend",pos:{x:-14,z:0},radius:2.4,
+  label:()=>"哞哞酱（投币问路）",
+  action(){
+    const s=MF.state;
+    if(MF.allMainUnlocked()){
+      MF.dialog("哞哞酱",["欢迎光临～检测到全结局员工。哞～","新货上架：奶蛙味奶昔 — 现已上市 — 限量供应。","成分：奶蛙 100%。保质期：永远。哞～"],()=>{
+        if(s.inv.coin>0)MF.confirm("投币购买「奶蛙味奶昔」？\n饮用前请确认自己不是奶蛙。",ok=>{
+          if(ok){s.inv.coin--;MF.ending("egg");}});
+        else MF.toast("奶牛脸眨了眨眼：没有硬币，哞～");
+      });
+      return;
+    }
+    if(!s.inv.coin){MF.dialog("哞哞酱",["欢迎光临～需要提示吗？哞～","（投币口闪着灯。你摸了摸口袋——没有硬币。）"]);return;}
+    s.inv.coin--;s.flags.metVend=true;MF.refreshPanel();
+    MF.dialog("哞哞酱",["叮。硬币吞下去了。","出口在左边。","骗你的，左边是搅拌机。哞～","右边是员工休息室。但你要是问路，我建议不要问。哞～","因为问路的人，后来都成了这里的员工。哞～","（价目表最后一项：奶蛙味奶昔 — 售罄 — 永远）"]);
+  }});
+
+/* ============================================================
+ * 道具 4：奶渍怪 + 装死机制（空格）
+ * ============================================================ */
+const slime=new THREE.Group();slime.position.set(-13,0,7);scene.add(slime);
+const slimeBody=new THREE.Mesh(new THREE.IcosahedronGeometry(0.6,1),lam(0xd8d6bb,{transparent:true,opacity:0.9}));
+slimeBody.position.y=0.6;slime.add(slimeBody);
+[[-0.22],[0.22]].forEach(e=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,5),bas(0x86c24b));m.position.set(e[0],0.75,0.5);slime.add(m);});
+const slimeHome=new THREE.Vector3(-13,0,7);
+labelSprite("奶渍怪 · 按住空格装死", -13,2.2,7,3.6);
+let slimeRetreat=false;
+
+/* ============================================================
+ * 道具 5：三色阀门（草莓3 · 巧克力2 · 薄荷1）
+ * ============================================================ */
+const valveDefs=[["草莓",0xd9605a,-7.5],["巧克力",0x5a4030,-6],["薄荷",0x86c24b,-4.5]];
+const valveTurns=[0,0,0],valveWheels=[];
+valveDefs.forEach((v,i)=>{
+  const pipe=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,2.6,7),lam(v[1]));
+  pipe.position.set(v[2],1.3,-10.5);scene.add(pipe);
+  const wheel=new THREE.Mesh(new THREE.TorusGeometry(0.32,0.06,6,12),lam(0xd9b84a));
+  wheel.position.set(v[2],1.3,-10.1);scene.add(wheel);valveWheels.push(wheel);
+  const cnt=labelSprite(v[0]+" 0圈",v[2],2.2,-10.5,1.8);
+  v.push(cnt);
+  MF.register({id:"valve"+i,pos:{x:v[2],z:-10.1},radius:1.7,
+    label:()=>v[0]+"阀门 · "+valveTurns[i]+" 圈 — 拧一圈",
+    action(){
+      valveTurns[i]=(valveTurns[i]+1)%6;
+      wheel.rotation.z=valveTurns[i]*Math.PI/3;
+      cnt.material.map.dispose();
+      const ns=labelSprite(v[0]+" "+valveTurns[i]+"圈",v[2],2.2,-10.5,1.8);
+      cnt.material=ns.material;scene.remove(ns);
+      checkValves();
+    }});
+});
+function checkValves(){
+  if(!MF.state.flags.valveSolved&&valveTurns[0]===3&&valveTurns[1]===2&&valveTurns[2]===1){
+    MF.state.flags.valveSolved=true;
+    valveWheels.forEach(w=>w.material=lam(0x86c24b));
+    MF.toast("管道里的液体变成不自然的粉色——地板裂开了。（场景中：通往第三幕的阶梯）");
+    MF.refreshPanel();
+  }
+}
+const vReset=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.15,0.3),lam(0x8c3b2e));
+vReset.position.set(-3,0.9,-10.3);scene.add(vReset);crate(-3,-10.3);
+MF.register({id:"vreset",pos:{x:-3,z:-10.3},radius:1.5,
+  label:()=>"阀门归零",
+  action(){valveTurns.fill(0);valveWheels.forEach(w=>w.rotation.z=0);MF.toast("三个阀门都松回了 0 圈。");}});
+labelSprite("三色阀门 · 配方在磁带里", -6,3,-10.5,3.6);
+
+/* ============================================================
+ * 道具 6：收音机（藏磁带1）+ 散落的磁带2/3 + 录音机播放
+ * ============================================================ */
+crate(0,-10);
+const radio=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.35,0.3),lam(0x4a4b55));
+radio.position.set(0,0.88,-10);scene.add(radio);
+labelSprite("收音机 + 录音机", 0,2.2,-10,3);
+MF.register({id:"radio",pos:{x:0,z:-10},radius:1.8,
+  label:()=>MF.state.inv.tapes[0]?null:"打开收音机后盖",
+  action(){
+    MF.state.inv.tapes[0]=true;MF.refreshPanel();
+    MF.dialog("你",["后盖里卡着一盘磁带。标签写着：EMPLOYEE TAPE 01。","你把它塞进了奶瓶包。"]);
+  }});
+const tapeMeshes=[];
+[[-1.5,-8],[1.5,-8.5]].forEach((p,i)=>{
+  const tp=tapeMesh();tp.position.set(p[0],0.05,p[1]);scene.add(tp);tapeMeshes.push(tp);
+  MF.register({id:"tape"+(i+1),pos:{x:p[0],z:p[1]},radius:1.6,
+    label:()=>MF.state.inv.tapes[i+1]?null:"拾取 员工磁带 0"+(i+2),
+    action(){MF.state.inv.tapes[i+1]=true;tp.visible=false;
+      MF.toast("员工磁带 0"+(i+2)+" 入包（"+MF.tapeCount()+"/3）");MF.refreshPanel();}});
+});
+const player=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.3,0.45),lam(0x5a4728));
+player.position.set(2.2,0.85,-10);scene.add(player);crate(2.2,-10);
+const heard=[false,false,false];
+const tapeLines=[
+  ["厂长（温和得可怕）",["我们要让每个人都能喝到奶。无限的奶。"]],
+  ["实验记录",["第 1 至 12 号试饮员，产奶稳定。风味各异。","已装瓶。"]],
+  ["同一个声音（在哭）",["（很长的沉默）","我们不应该给它们听广播的。","它们现在会自己数数了。"]],
+];
+MF.register({id:"tapeplayer",pos:{x:2.2,z:-10},radius:1.8,
+  label:()=>{
+    if(MF.state.flags.truthHeard>=3)return "录音机（真相 3/3）";
+    const next=MF.state.inv.tapes.findIndex((t,i)=>t&&!heard[i]);
+    return next>=0?"播放 员工磁带 0"+(next+1):"录音机（需要磁带）";
+  },
+  action(){
+    const s=MF.state;
+    const next=s.inv.tapes.findIndex((t,i)=>t&&!heard[i]);
+    if(next<0){MF.toast(s.flags.truthHeard>=3?"三盘都听完了。这里没有奶，只有奶蛙。":"先去把磁带找回来。");return;}
+    MF.dialog(tapeLines[next][0],tapeLines[next][1],()=>{
+      heard[next]=true;s.flags.truthHeard++;MF.refreshPanel();
+      if(s.flags.truthHeard>=3)MF.dialog("你",["你明白了。这里没有奶。这里只有奶蛙。","而你是第 13 批。","（配方比例浮现在脑海：草莓 3 · 巧克力 2 · 薄荷 1）"]);
+    });
+  }});
+
+/* ============================================================
+ * 道具 7：鸽子救援 → 吐钥匙；另有地上的钥匙（速通用）
+ * ============================================================ */
+crate(6,-10);
+const pigeon=new THREE.Group();pigeon.position.set(6,1.0,-10);scene.add(pigeon);
+const pbody=new THREE.Mesh(new THREE.SphereGeometry(0.28,8,6),lam(0x9a9a92));pigeon.add(pbody);
+const phead=new THREE.Mesh(new THREE.SphereGeometry(0.14,7,5),lam(0x8a8a96));phead.position.set(0,0.24,0.16);pigeon.add(phead);
+const straw=new THREE.Mesh(new THREE.TorusGeometry(0.33,0.03,5,12),lam(0xe8e4cc));straw.rotation.x=0.6;pigeon.add(straw);
+labelSprite("被吸管缠住的鸽子", 6,2.2,-10,3);
+const pigeonKey=keyMesh();pigeonKey.position.set(6,0.3,-8.6);pigeonKey.visible=false;scene.add(pigeonKey);
+let pigeonFly=0;
+MF.register({id:"pigeon",pos:{x:6,z:-10},radius:2,
+  label:()=>MF.state.flags.pigeonSaved?null:"咬断吸管，救鸽子",
+  action(){
+    MF.dialog("鸽子",["你用牙齿咬断了吸管。鸽子扑腾了两下翅膀，歪着头看你。","「咕。」","它吐出一把小小的、闪着光的钥匙，跳进通风口消失了。","钥匙还是温的。"],()=>{
+      MF.state.flags.pigeonSaved=true;pigeonFly=0.001;pigeonKey.visible=true;MF.refreshPanel();
+    });
+  }});
+MF.register({id:"pigeonkey",pos:{x:6,z:-8.6},radius:1.6,
+  label:()=>(MF.state.flags.pigeonSaved&&!MF.state.inv.key)?"拾取 鸽子的钥匙":null,
+  action(){MF.state.inv.key=true;pigeonKey.visible=false;MF.toast("鸽子的钥匙入包。后门在等你。");MF.refreshPanel();}});
+const floorKey=keyMesh();floorKey.position.set(9,0.12,-7);scene.add(floorKey);
+labelSprite("地上有把钥匙（谁的？）", 9,1.5,-7,3);
+MF.register({id:"floorkey",pos:{x:9,z:-7},radius:1.6,
+  label:()=>MF.state.inv.floorKey?null:"捡起 地上的钥匙",
+  action(){MF.state.inv.floorKey=true;floorKey.visible=false;MF.toast("不知道是谁掉的。你没问。");MF.refreshPanel();}});
+
+/* ============================================================
+ * 道具 8：后门（钥匙校验 → 溜了溜了 / 三分钟下班）
+ * ============================================================ */
+const door=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.6,0.18),lam(0x4a4b55));
+door.position.set(14,1.3,-13.8);scene.add(door);
+const crack=new THREE.Mesh(new THREE.PlaneGeometry(1.5,2.4),bas(0x8ab4e0,{transparent:true,opacity:0.5}));
+crack.position.set(14,1.3,-13.69);scene.add(crack);
+const doorLight=new THREE.PointLight(0x8ab4e0,0.9,7);doorLight.position.set(14,1.6,-13);scene.add(doorLight);
+labelSprite("后门 · 冷蓝晨光", 14,3.2,-13.5,3);
+let doorOpen=0;
+MF.register({id:"door",pos:{x:14,z:-13.2},radius:2.4,
+  label:()=>doorOpen?"（门开着）":"后门（上锁）",
+  action(){
+    if(doorOpen)return;
+    const s=MF.state;
+    if(!(s.inv.key||s.inv.floorKey)){MF.toast("锁着。也许某只鸽子、或者某块地板知道钥匙在哪。");return;}
+    doorOpen=0.001;
+    MF.toast("锁开了——它一直就是开着的，只是你不敢试。");
+    setTimeout(()=>{
+      MF.ending(MF.elapsed()<=180?"speed":"escape");
+    },1100);
+  }});
+
+/* ============================================================
+ * 道具 9：控制台（插 3 磁带）+ 红色停泵按钮 → 真结局
+ * ============================================================ */
+const consoleG=new THREE.Group();consoleG.position.set(-6,0,0);scene.add(consoleG);
+const desk=new THREE.Mesh(new THREE.BoxGeometry(2.4,1,0.9),lam(0x4a4b55));desk.position.y=0.5;consoleG.add(desk);
+const slotLights=[];
+for(let i=0;i<3;i++){
+  const slot=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.06,0.26),lam(0x2a2a30));
+  slot.position.set(-0.7+i*0.7,1.03,0);consoleG.add(slot);
+  const lt=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.03,0.2),bas(0x3a3a30));
+  lt.position.set(-0.7+i*0.7,1.07,0);consoleG.add(lt);slotLights.push(lt);
+}
+labelSprite("控制台 · 磁带插槽", -6,2.2,0,3);
+MF.register({id:"console",pos:{x:-6,z:0},radius:2.2,
+  label:()=>{
+    const n=MF.state.flags.tapesInserted;
+    if(n>=3)return "控制台（三盘磁带已就位）";
+    return MF.tapeCount()>n?"插入磁带（"+n+"/3）":"控制台（需要员工磁带）";
+  },
+  action(){
+    const s=MF.state,n=s.flags.tapesInserted;
+    if(n>=3){MF.toast("三个声音在等红色按钮。");return;}
+    if(MF.tapeCount()<=n){MF.toast("插槽空着。真相还差 "+(3-n)+" 盘磁带。");return;}
+    s.flags.tapesInserted++;slotLights[n].material=bas(0x86c24b);
+    MF.toast("磁带 0"+(n+1)+" 就位（"+s.flags.tapesInserted+"/3）");MF.refreshPanel();
+  }});
+const redBtn=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.16,0.1,10),bas(0xd9302a));
+redBtn.position.set(-3.8,1.06,0);scene.add(redBtn);crate(-3.8,0);
+labelSprite("红色按钮 · 停泵", -3.8,2.2,0,2.6);
+MF.register({id:"redbtn",pos:{x:-3.8,z:0},radius:1.8,
+  label:()=>"红色按钮",
+  action(){
+    if(MF.state.flags.tapesInserted<3){MF.toast("还缺磁带。三个声音要一起响，泵才会停。");return;}
+    MF.confirm("三盘磁带同时播放。\n按下红色按钮，停止主泵？",ok=>{if(ok)MF.ending("wean");});
+  }});
+
+/* ============================================================
+ * 道具 10：搅拌机投料口 → 草莓奶昔 S 级
+ * ============================================================ */
+const blender=new THREE.Group();blender.position.set(0,0,0);scene.add(blender);
+const bowl=new THREE.Mesh(new THREE.CylinderGeometry(1.1,0.85,1.6,10,1,true),lam(0x7a6f5c,{side:THREE.DoubleSide}));
+bowl.position.y=1.1;blender.add(bowl);
+const blade=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.06,0.24),lam(0xe6e2cf));blade.position.y=0.7;blender.add(blade);
+const residue=new THREE.Mesh(new THREE.CylinderGeometry(1.02,1.02,0.3,10),lam(0xe06b9e,{transparent:true,opacity:0.75}));
+residue.position.y=1.5;blender.add(residue);
+const toy=new THREE.Mesh(new THREE.SphereGeometry(0.16,7,5),lam(0x8fbe5e));toy.position.set(1.4,0.14,0.6);blender.add(toy);
+labelSprite("搅拌机 · 投料口", 0,2.6,0,3);
+MF.register({id:"blender",pos:{x:0,z:0},radius:2.2,
+  label:()=>"看看投料口",
+  action(){MF.confirm("刀片转得比看起来慢。\n桶边的玩具奶蛙仰面朝天，好像在说：来啊。\n\n要爬进去吗？",ok=>{if(ok)MF.ending("shake");});}});
+MF.register({id:"toy",pos:{x:1.4,z:0.6},radius:1.2,
+  label:()=>"戳戳玩具奶蛙",
+  action(){MF.toast("它没有反应。它只是咧着嘴笑。");}});
+
+/* ============================================================
+ * 道具 11：母液接口 → 新厂长
+ * ============================================================ */
+const vat=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,2.6,12,1,true),
+  bas(0xe06b9e,{transparent:true,opacity:0.5,side:THREE.DoubleSide}));
+vat.position.set(5,1.5,0);scene.add(vat);
+const liquid=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,1.8,12),lam(0xe06b9e));
+liquid.position.set(5,1.1,0);scene.add(liquid);
+const port=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,0.3,8),lam(0x6e1f2a));
+port.rotation.x=Math.PI/2;port.position.set(5,0.7,1.5);scene.add(port);
+labelSprite("母液罐 · 接口", 5,3.2,0,3);
+MF.register({id:"port",pos:{x:5,z:1.5},radius:1.8,
+  label:()=>"母液接口",
+  action(){MF.confirm("接口形状正好能接上你的奶瓶包。\n合适得……像本来就该长在那里。\n\n接上去吗？",ok=>{if(ok)MF.ending("manager");});}});
+
+/* ============================================================
+ * 道具 12：五口味奶瓶（草莓/巧克力/薄荷/香蕉/蓝莓）
+ * ============================================================ */
+const bottlePos={strawberry:[10,2],chocolate:[12,4],mint:[14,2],vanilla:[16,4],plain:[15,6]};
+MF.FLAVORS.forEach(f=>{
+  const p=bottlePos[f],b=bottleMesh(MF.FLAVOR_COLOR[f]);
+  b.position.set(p[0],0,p[1]);scene.add(b);
+  updaters.push(t=>{b.rotation.y=t*0.8;b.position.y=0.05+Math.sin(t*1.5+p[0])*0.04;});
+  MF.register({id:"bottle_"+f,pos:{x:p[0],z:p[1]},radius:1.6,
+    label:()=>MF.state.inv.bottles[f]?null:"拾取 "+MF.FLAVOR_CN[f]+"奶瓶",
+    action(){MF.state.inv.bottles[f]=true;b.visible=false;
+      MF.toast(MF.FLAVOR_CN[f]+"奶瓶入包（"+MF.bottleCount()+"/5）");MF.refreshPanel();}});
+});
+labelSprite("五口味奶瓶 · 散落区", 13,2.4,4,3.4);
+
+/* ============================================================
+ * 道具 13：五口味凹槽墙 → 全开 → 祭坛显现
+ * ============================================================ */
+const grooveWall=new THREE.Mesh(new THREE.BoxGeometry(5.6,2,0.4),lam(0x3a3a42));
+grooveWall.position.set(10,1,9.5);scene.add(grooveWall);
+const slotBottles=[];
+MF.FLAVORS.forEach((f,i)=>{
+  const x=8+i*1.0;
+  const hole=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.5,8),lam(0x1c1d24));
+  hole.position.set(x,1.1,9.28);hole.rotation.x=Math.PI/2;scene.add(hole);
+  const b=bottleMesh(MF.FLAVOR_COLOR[f]);b.position.set(x,0.85,9.2);b.visible=false;scene.add(b);slotBottles.push(b);
+  const glow=new THREE.PointLight(MF.FLAVOR_COLOR[f],0,3);glow.position.set(x,1.3,8.8);scene.add(glow);
+  MF.register({id:"slot_"+f,pos:{x:x,z:9.2},radius:1.4,
+    label:()=>MF.state.flags.slots[i]?null:"凹槽 · "+MF.FLAVOR_CN[f],
+    action(){
+      const s=MF.state;
+      if(!s.inv.bottles[f]){MF.toast("还缺"+MF.FLAVOR_CN[f]+"味奶瓶。");return;}
+      s.inv.bottles[f]=false;s.flags.slots[i]=true;
+      b.visible=true;glow.intensity=0.9;
+      MF.toast(MF.FLAVOR_CN[f]+"奶瓶就位（"+MF.slotCount()+"/5）");MF.refreshPanel();
+      if(MF.slotCount()===5){
+        s.flags.altarOpen=true;altar.visible=true;altarLight.intensity=1.2;
+        MF.dialog("？？？",["五个凹槽同时亮起。五种颜色的光把你的影子切成五份。","地面裂开，露出一个隐藏的小房间。","墙上的涂鸦写着：乳糖不耐受是神的旨意。"]);
+        MF.refreshPanel();
+      }
+    }});
+});
+labelSprite("五口味凹槽", 10,2.6,9.5,2.6);
+
+/* ============================================================
+ * 道具 14：隐藏祭坛 · 奶蛙舞 → 蛙神降临
+ * ============================================================ */
+const altar=new THREE.Group();altar.position.set(15,0,11.5);altar.visible=false;scene.add(altar);
+const altarBase=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.6,0.15,12),lam(0x3a2a4a));
+altarBase.position.y=0.08;altar.add(altarBase);
+for(let i=0;i<5;i++){
+  const a=i*Math.PI*2/5;
+  const candle=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.4,0.12),lam(0xe6e2cf));
+  candle.position.set(Math.cos(a)*1.1,0.35,Math.sin(a)*1.1);altar.add(candle);
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.14,5),bas(MF.FLAVOR_COLOR[MF.FLAVORS[i]]));
+  flame.position.set(Math.cos(a)*1.1,0.62,Math.sin(a)*1.1);altar.add(flame);
+}
+const altarLight=new THREE.PointLight(0xe06b9e,0,7);altarLight.position.set(15,1.4,11.5);scene.add(altarLight);
+labelSprite("隐藏祭坛（凹槽集齐后开启）", 15,2.4,11.5,4);
+MF.register({id:"altar",pos:{x:15,z:11.5},radius:2.2,
+  enabled:()=>MF.state.flags.altarOpen,
+  label:()=>"跳奶蛙舞",
+  action(){
+    MF.toast("走调的奶蛙舞曲响起来了。你的身体记得这个动作。");
+    MF.startDance(()=>MF.ending("god"));
+  }});
+
+/* ===== 输入 ===== */
+const keys={};
+addEventListener("keydown",e=>{
+  keys[e.code]=true;
+  if(e.code==="KeyF")toggleFlash();
+  if(e.code==="Space"){e.preventDefault();setDead(true);}
+});
+addEventListener("keyup",e=>{keys[e.code]=false;if(e.code==="Space")setDead(false);});
+let dragging=false,lx=0,ly=0;
+const view=document.getElementById("view");
+view.addEventListener("mousedown",e=>{dragging=true;lx=e.clientX;ly=e.clientY;});
+addEventListener("mouseup",()=>dragging=false);
+addEventListener("mousemove",e=>{if(!dragging)return;
+  yaw-=(e.clientX-lx)*0.004;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-ly)*0.004));lx=e.clientX;ly=e.clientY;});
+let touchLook=null;
+view.addEventListener("touchstart",e=>{if(e.touches.length===1){touchLook={x:e.touches[0].clientX,y:e.touches[0].clientY};}},{passive:true});
+view.addEventListener("touchmove",e=>{if(touchLook&&e.touches.length===1){
+  const t=e.touches[0];yaw-=(t.clientX-touchLook.x)*0.005;
+  pitch=Math.max(-1.2,Math.min(1.2,pitch-(t.clientY-touchLook.y)*0.005));
+  touchLook={x:t.clientX,y:t.clientY};}},{passive:true});
+view.addEventListener("touchend",()=>touchLook=null);
+document.querySelectorAll("#touch button,#actBtns button[data-k]").forEach(b=>{
+  const k=b.dataset.k;
+  const on=e=>{e.preventDefault();keys[k]=true;b.classList.add("hold");
+    if(k==="KeyF")toggleFlash();if(k==="Space")setDead(true);};
+  const off=()=>{keys[k]=false;b.classList.remove("hold");if(k==="Space")setDead(false);};
+  b.addEventListener("mousedown",on);b.addEventListener("touchstart",on,{passive:false});
+  ["mouseup","mouseleave","touchend","touchcancel"].forEach(ev=>b.addEventListener(ev,off));
+});
+document.getElementById("btnE").addEventListener("click",()=>MF.interact());
+document.getElementById("btnReset").onclick=()=>location.reload();
+document.getElementById("btnClear").onclick=()=>{MF.clearUnlocked();location.reload();};
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);});
+
+/* ===== 手电 / 装死 ===== */
+function toggleFlash(){
+  const s=MF.state;
+  if(!s.inv.flashlight){MF.toast("还没有手电。它在西北角的板条箱上。");return;}
+  if(s.milk<=0){MF.toast("手电没奶了。紧张会产奶——但装死会扣乳糖。");return;}
+  s.flashOn=!s.flashOn;flash.intensity=s.flashOn?2.2:0;MF.refreshPanel();
+}
+function setDead(v){
+  const s=MF.state;
+  if(v&&!s.dead){
+    s.dead=true;s.lactose=Math.max(0,s.lactose-12);
+    MF.toast("你缩成一坨半透明的奶冻。乳糖 -12。");MF.refreshPanel();
+  }else if(!v&&s.dead){s.dead=false;}
+}
+
+/* ===== 主循环 ===== */
+const clock=new THREE.Clock();let panelAcc=0;
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.05),t=clock.elapsedTime;
+  const s=MF.state;
+  updaters.forEach(f=>f(t,dt));
+  // 移动
+  const endingOn=document.getElementById("mf-ending").classList.contains("on");
+  if(!s.dead&&!endingOn&&!MF.dancing()){
+    const sp=3.2*dt;
+    const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+    const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+    if(keys.KeyW)camera.position.addScaledVector(fwd,sp);
+    if(keys.KeyS)camera.position.addScaledVector(fwd,-sp);
+    if(keys.KeyA)camera.position.addScaledVector(right,-sp);
+    if(keys.KeyD)camera.position.addScaledVector(right,sp);
+  }
+  camera.position.x=Math.max(-W/2+0.5,Math.min(W/2-0.5,camera.position.x));
+  camera.position.z=Math.max(-D/2+0.5,Math.min(D/2-0.5,camera.position.z));
+  const targetY=s.dead?0.45:1.4;
+  camera.position.y+=(targetY-camera.position.y)*Math.min(1,dt*8);
+  camera.rotation.set(pitch,yaw,s.dead?0.12:0);
+  // 手电耗奶
+  if(s.flashOn){s.milk=Math.max(0,s.milk-dt*0.7);
+    if(s.milk<=0){s.flashOn=false;flash.intensity=0;MF.toast("手电灭了。奶量耗尽。");}}
+  // 奶渍怪 AI
+  const pp=camera.position;
+  const dSlime=slime.position.distanceTo(new THREE.Vector3(pp.x,0,pp.z));
+  const inZone=slime.position.distanceTo(slimeHome)<8;
+  if(s.dead){
+    if(!slimeRetreat&&dSlime<3){slimeRetreat=true;MF.toast("奶渍怪蹭了蹭你，然后——「呸。」它嫌弃地走了。");}
+    slime.position.lerp(slimeHome,dt*1.5);
+  }else{
+    slimeRetreat=false;
+    if(dSlime<6.5&&inZone&&!endingOn){
+      const dir=new THREE.Vector3(pp.x-slime.position.x,0,pp.z-slime.position.z).normalize();
+      let speed=1.35;
+      if(s.flashOn){
+        const look=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+        if(look.dot(dir)<-0.55)speed=0.3;
+      }
+      slime.position.addScaledVector(dir,speed*dt);
+      if(dSlime<0.85&&!MF.dialogOpen()&&!document.getElementById("mf-confirm").classList.contains("on")){
+        MF.ending("shake");
+      }
+    }else{
+      slime.position.lerp(slimeHome,dt*0.8);
+    }
+  }
+  slimeBody.position.y=0.6+Math.sin(t*2)*0.07;
+  slimeBody.rotation.y=t*0.6;
+  // 鸽子飞走
+  if(pigeonFly>0&&pigeonFly<3){pigeonFly+=dt;pigeon.position.y+=dt*2.2;pigeon.position.x+=dt*1.4;
+    if(pigeonFly>=3)pigeon.visible=false;}
+  // 门开
+  if(doorOpen>0&&doorOpen<1){doorOpen=Math.min(1,doorOpen+dt*0.9);
+    door.rotation.y=-doorOpen*1.4;door.position.x=14-doorOpen*0.7;crack.material.opacity=0.5+doorOpen*0.4;}
+  // 母液翻滚 / 搅拌机
+  liquid.position.y=1.1+Math.sin(t*1.2)*0.08;
+  blade.rotation.y+=dt*1.1;
+  // 交互检测 + 标记环
+  MF.update(pp.x,pp.z);
+  const act=MF.getActive();
+  ring.visible=!!act;
+  if(act){ring.position.set(act.pos.x,0.04,act.pos.z);
+    const k=1+Math.sin(t*5)*0.08;ring.scale.set(k,k,1);}
+  // 面板节流刷新
+  panelAcc+=dt;if(panelAcc>0.3){panelAcc=0;MF.refreshPanel();}
+  renderer.render(scene,camera);
+}
+animate();
+window.__lab={camera,slime,keys,get doorOpen(){return doorOpen;}};
+MF.toast("实验台就绪：每个道具都可单独交互。右侧面板实时显示状态。",4000);
+})();
+</script>
+</body>
+</html>

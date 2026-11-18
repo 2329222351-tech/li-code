@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>角色运动演示 · 奶蛙：午夜奶厂 — 独立场景</title>
+<style>
+  :root{--bg:#15160f;--panel:#1d1f14;--line:#3a3d26;--ink:#e6e2cf;--mut:#9a9c7a;--acc:#86c24b;--warn:#d9b84a;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font:13px/1.5 "Segoe UI","Microsoft YaHei",sans-serif;overflow:hidden}
+  #app{display:flex;height:100%}
+  #stage{position:relative;flex:1;min-width:0}
+  #cv{display:block;width:100%;height:100%}
+  #hud{position:absolute;left:14px;top:12px;z-index:2;pointer-events:none}
+  #hud h1{margin:0 0 2px;font-size:16px;font-weight:600;letter-spacing:.5px}
+  #hud .sub{color:var(--mut);font-size:12px}
+  #tip{position:absolute;left:14px;bottom:12px;color:var(--mut);font-size:11px;z-index:2;pointer-events:none}
+  #panel{width:320px;flex:none;background:var(--panel);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;overflow:hidden}
+  #panel .top{padding:14px;border-bottom:1px solid var(--line)}
+  #panel .top .t{font-size:14px;font-weight:600;margin-bottom:8px}
+  .row{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .row label{color:var(--mut);min-width:52px}
+  input[type=range]{flex:1;accent-color:var(--acc)}
+  .btn{background:#2a2d1c;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+    padding:5px 10px;font-size:12px;cursor:pointer}
+  .btn:hover{border-color:var(--acc)}
+  .btn.on{background:var(--acc);color:#15160f;border-color:var(--acc)}
+  #list{overflow-y:auto;padding:8px 10px 20px;flex:1}
+  .card{border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:9px 10px;background:#191b11}
+  .card .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  .card .nm{font-weight:600}
+  .card .kind{font-size:11px;color:var(--mut)}
+  .states{display:flex;flex-wrap:wrap;gap:5px}
+  .states .btn{padding:4px 8px;font-size:11px}
+  .legend{margin-top:6px;color:var(--mut);font-size:11px}
+  #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:#15160f;color:#e24b4a;z-index:9;padding:40px;text-align:center;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="hud">
+      <h1>角色运动演示</h1>
+      <div class="sub">独立场景 · 真实 GLB + CharMotion · 未改动 index.html</div>
+    </div>
+    <div id="tip">拖动白色小球 = 移动"玩家"，角色的眼睛/身体会追踪它</div>
+    <div id="err"></div>
+  </div>
+  <div id="panel">
+    <div class="top">
+      <div class="t">全局控制</div>
+      <div class="row"><label>速度</label><input id="speed" type="range" min="0" max="2" step="0.05" value="1"><span id="speedV">1.0</span></div>
+      <div class="row">
+        <button class="btn on" id="pause">运行中</button>
+        <button class="btn" id="reset">全部复位</button>
+      </div>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="assets/char_motion.js"></script>
+<script>
+(function(){
+  'use strict';
+  var T=window.THREE;
+  var errBox=document.getElementById('err');
+  function fail(msg){errBox.style.display='flex';errBox.textContent=msg;throw new Error(msg);}
+  if(!T)fail('THREE 未加载');
+  if(!window.GLTFLoader)fail('GLTFLoader 未加载');
+  if(!window.CharMotion)fail('CharMotion 未加载');
+
+  /* 角色配置：kind / 文件 / 初始状态 / 状态表 / 站位 */
+  var CFG=[
+    {id:'frogGod',    kind:'frogGod', file:'frog_god.glb',       icon:'蛙神',   states:['idle','descend','stomp','speak','depart'], x:-4.4},
+    {id:'spider',     kind:'spider',  file:'milking_spider.glb', icon:'挤奶机蜘蛛', states:['idle','alert','chase','lunge'], x:-2.6},
+    {id:'vending',    kind:'vending', file:'moo_vending.glb',    icon:'哞哞酱',  states:['idle','talk','glitch'], x:-0.9},
+    {id:'pigeon',     kind:'pigeon',  file:'pigeon.glb',         icon:'鸽子',   states:['trapped','givekey','flyaway'], x:0.8},
+    {id:'slime',      kind:'slime',   file:'milk_slime.glb',     icon:'奶渍怪', states:['idle','lurk','notice','chase','spit'], x:2.5},
+    {id:'clones',     kind:'clones',  file:'clone_frogs.glb',    icon:'克隆奶蛙群', states:['idle','line','stare','leave'], x:4.3}
+  ];
+
+  /* 场景 */
+  var cv=document.getElementById('cv');
+  var renderer=new T.WebGLRenderer({canvas:cv,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setClearColor(0x1a1c14);
+  var scene=new T.Scene();
+  scene.fog=new T.FogExp2(0x1a1c14,0.035);
+  var camera=new T.PerspectiveCamera(42,1,0.1,100);
+  camera.position.set(0,3.4,11.5);
+  camera.lookAt(0,1,0);
+  scene.add(new T.HemisphereLight(0xe6e2cf,0x2a2d1c,1.1));
+  var key=new T.DirectionalLight(0xfff3d0,1.4);key.position.set(4,9,7);scene.add(key);
+  var fill=new T.DirectionalLight(0x9fb4d0,0.55);fill.position.set(-6,4,3);scene.add(fill);
+  // 地面网格（PS1 绿）
+  var grid=new T.GridHelper(30,30,0x86c24b,0x394321);
+  grid.material.transparent=true;grid.material.opacity=0.35;scene.add(grid);
+
+  /* 玩家诱饵球（可拖动） */
+  var bait=new T.Mesh(new T.SphereGeometry(0.16,10,7),
+    new T.MeshBasicMaterial({color:0xffffff,wireframe:true}));
+  bait.position.set(0,1.1,2.2);scene.add(bait);
+
+  /* 载入角色 */
+  var loader=new window.GLTFLoader();
+  var actors=[];
+  var listEl=document.getElementById('list');
+  var loaded=0;
+  CFG.forEach(function(cfg,idx){
+    var card=document.createElement('div');card.className='card';
+    card.innerHTML='<div class="hd"><span class="nm">'+cfg.icon+'</span><span class="kind" id="k_'+cfg.id+'">载入中</span></div>'+
+      '<div class="states" id="s_'+cfg.id+'"></div><div class="legend" id="l_'+cfg.id+'"></div>';
+    listEl.appendChild(card);
+
+    loader.load('assets/'+cfg.file,function(gltf){
+      var root=gltf.scene;
+      // 套用与主项目一致的 PS1 脏色材质（按部件名映射色板）
+      root.traverse(function(o){
+        if(!o.isMesh)return;
+        var n=o.name||'', col=0xd9d8c0;
+        if(/Eye|Sensor/.test(n))col=0x86c24b;
+        else if(/Pupil|Cord|Spot|Mouth/.test(n))col=0x1c1d24;
+        else if(/CrownRim|Horn|LegB|Foot|Tag/.test(n))col=0x8c3b2e;
+        else if(/LegA|Pipe|Nozzle|Body|Straw/.test(n))col=0x7e8b3a;
+        else if(/Crown|Puddle|Blob|Head/.test(n))col=0xe6e2cf;
+        else if(/Nose/.test(n))col=0xd9b84a;
+        else if(/Drip|Bead|String/.test(n))col=0x9aa858;
+        o.material=new T.MeshLambertMaterial({color:col,flatShading:true});
+      });
+      // 统一高度约 1.8，落地
+      var box=new T.Box3().setFromObject(root),sz=new T.Vector3();box.getSize(sz);
+      var sc=1.8/(sz.y||1);root.scale.setScalar(sc);
+      box.setFromObject(root);
+      root.position.set(cfg.x, -box.min.y, 0);
+      // 让/dat 基础朝向：猫脸/奶牛脸/鸽子/蜘蛛眼都朝 +Y 方向 → 转到面向镜头(+Z)
+      root.rotation.y=Math.PI;
+      scene.add(root);
+
+      var motion=window.CharMotion.create(cfg.kind,root);
+      var a={cfg:cfg,root:root,motion:motion,state:cfg.states[0],speed:1};
+      actors.push(a);
+
+      // 状态按钮
+      var boxEl=document.getElementById('s_'+cfg.id);
+      cfg.states.forEach(function(s){
+        var b=document.createElement('button');b.className='btn'+(s===cfg.states[0]?' on':'');
+        b.textContent=s;
+        b.onclick=function(){
+          a.state=s;
+          Array.prototype.forEach.call(boxEl.children,function(x){x.classList.remove('on');});
+          b.classList.add('on');
+        };
+        boxEl.appendChild(b);
+      });
+      document.getElementById('k_'+cfg.id).textContent=cfg.kind;
+      document.getElementById('l_'+cfg.id).textContent='状态 → '+cfg.states[0];
+
+      loaded++;
+      // 只读调试引用：便于在控制台检查各角色的运动状态
+      window.__motionDemo={actors:actors,scene:scene,bait:bait};
+      if(loaded===CFG.length)document.getElementById('k_frogGod').textContent='6 / 6 已加载';
+    },undefined,function(e){
+      document.getElementById('k_'+cfg.id).textContent='加载失败';
+      console.error(cfg.file,e);
+    });
+  });
+
+  /* 拖动诱饵球 */
+  var drag=false,plane=new T.Plane(new T.Vector3(0,0,1),-2.2),ray=new T.Raycaster(),ndc=new T.Vector2(),hit=new T.Vector3();
+  function setNdc(e){var r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height*2-1));}
+  cv.addEventListener('pointerdown',function(e){setNdc(e);ray.setFromCamera(ndc,camera);
+    if(ray.intersectObject(bait).length){drag=true;cv.setPointerCapture(e.pointerId);}});
+  cv.addEventListener('pointermove',function(e){if(!drag)return;setNdc(e);ray.setFromCamera(ndc,camera);
+    if(ray.ray.intersectPlane(plane,hit)){bait.position.x=T.MathUtils.clamp(hit.x,-8,8);bait.position.y=T.MathUtils.clamp(hit.y,0.2,4);}});
+  cv.addEventListener('pointerup',function(){drag=false;});
+  cv.addEventListener('pointercancel',function(){drag=false;});
+
+  /* 控制 */
+  var paused=false,globalSpeed=1;
+  var pauseBtn=document.getElementById('pause');
+  pauseBtn.onclick=function(){paused=!paused;pauseBtn.textContent=paused?'已暂停':'运行中';pauseBtn.classList.toggle('on',!paused);};
+  document.getElementById('reset').onclick=function(){
+    actors.forEach(function(a){a.motion.setState(a.cfg.states[0],simTime);});
+  };
+  var speedInput=document.getElementById('speed'),speedV=document.getElementById('speedV');
+  speedInput.oninput=function(){globalSpeed=parseFloat(speedInput.value);speedV.textContent=globalSpeed.toFixed(1);};
+
+  function resize(){var w=cv.clientWidth,h=cv.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+  window.addEventListener('resize',resize);resize();
+
+  /* 主循环 */
+  var clock=new T.Clock(),simTime=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt=Math.min(clock.getDelta(),0.05);
+    if(!paused)simTime+=dt*globalSpeed;
+    // 轻微镜头呼吸，让静止状态也有生气
+    camera.position.x=Math.sin(simTime*0.12)*0.4;
+    camera.lookAt(0,1,0);
+    actors.forEach(function(a){
+      a.motion.update(simTime,paused?0:dt*globalSpeed,{
+        state:a.state,
+        player:bait.position,
+        speed:globalSpeed
+      });
+    });
+    renderer.render(scene,camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

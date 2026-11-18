@@ -37,9 +37,16 @@ li-code/
         │   ├── screenshots/                     界面截图
         │   └── ui-prototype/                    HTML 高保真原型
         └── GpsPoint-v1.1.apk                已构建 APK（5.3MB）
-    └── 06-code2.1e/        ← 第六章（当前）
+    └── 06-code2.1e/        ← 第六章
         ├── 学生手册背诵-1.0.0.exe            单文件绿色版（内置运行时）
         └── 使用说明.txt                     使用说明
+    └── 07-naiwaRA/         ← 第七章（当前）
+        ├── index.html                      PS1 风格三幕可玩场景（单文件主程序）
+        ├── interaction_lab.html            道具交互实验台
+        ├── motion_demo.html                角色运动演示
+        ├── assets/                         GLB 模型 / Blender 源文件 / 45 个音效
+        ├── vendor/                         three.js + GLTFLoader（本地化）
+        └── 三份设定文档                    剧情小说 / 场景设计 / 角色运动逻辑
 ```
 
 ## 第一章 · 01-code1
@@ -133,6 +140,27 @@ GpsPoint —— Android 虚拟定位工具，`03-code3`（GpsRoam）的衍生版
 进度数据保存在 exe 同级目录的 `data/` 文件夹（`progress.json` 背诵进度、`main.log` 启动日志），
 属于运行时个人数据，不入库（见 `.gitignore`）。
 
+## 第七章 · 07-naiwaRA
+
+《奶蛙：午夜奶厂》的 **PS1 风格三幕叙事恐怖游戏**可玩 HTML 原型。纯前端，Three.js 经典
+脚本版（`vendor/` 本地化，不依赖 CDN），无需构建、无需联网。
+
+- `index.html`：主场景，单文件承载三幕关卡（ACT I 醒奶区 / ACT II 发酵区 / ACT III 主奶泵室）、
+  HUD、PS1 后处理与剧情判定
+- `interaction_lab.html`：道具交互实验台，单独调试拾取 / 使用 / 反馈
+- `motion_demo.html`：角色运动演示，6 个 GLB 状态切换 + 眼睛追踪
+- `assets/`：角色与道具 GLB、Blender 源文件、45 个 WAV 音效（`manifest.js` 为索引）及音效试听页
+- `剧情小说与结局分章.md` / `场景设计与提示词.md` / `角色运动逻辑.md`：世界观、七个结局、美术与动效规格
+- `.build_*.py` / `.render_*.py` / `.probe_*.py`：模型与音效的构建、渲染、量测脚本（本地工具，非运行时依赖）
+
+GLB 与音频走相对路径加载，建议起本地 HTTP 服务后访问：
+
+```bash
+cd chapters/07-naiwaRA
+python -m http.server 8899
+# 浏览器打开 http://127.0.0.1:8899/index.html
+```
+
 ## 同步原则
 
 备份时**不包含**以下内容（已通过 `.gitignore` 排除）：
@@ -161,4 +189,4 @@ GpsPoint —— Android 虚拟定位工具，`03-code3`（GpsRoam）的衍生版
 - 仓库是 **Public**，请勿提交任何含密钥、token、个人隐私的内容。
 - `termux-tasker-master/` 是上游开源项目源码，仅供本地参考。
 - LFS 免费额度为 1 GiB 存储 / 1 GiB 月流量，`02-code2/release/` 已占用约 0.9 GiB，接近上限。
-- 后续新增项目直接开新的 `chapters/07-xxx/` 目录提交即可。
+- 后续新增项目直接开新的 `chapters/08-xxx/` 目录提交即可。
