@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奶蛙：午夜奶厂 · 音效库</title>
+<style>
+  :root{
+    --bg:#0e0b13; --panel:#171220; --panel2:#1e1829;
+    --ink:#e9e2ef; --sub:#9b8fae; --line:#2c2438;
+    --pink:#ff6fb5; --pink2:#ff9ad0; --danger:#ff4d6d;
+    --mint:#8ef0d0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%,#2a1330 0%,transparent 60%),var(--bg);
+    color:var(--ink);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    min-height:100vh;padding:36px 24px 80px;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+  header{margin-bottom:26px}
+  .kicker{color:var(--pink);font-size:13px;letter-spacing:.28em;font-weight:700;margin-bottom:10px}
+  h1{font-size:30px;line-height:1.25;letter-spacing:.02em}
+  h1 small{display:block;color:var(--sub);font-size:13px;letter-spacing:.18em;font-weight:500;margin-top:8px}
+  .bar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:22px 0 30px;padding:14px 16px;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;position:sticky;top:0;z-index:5;
+  }
+  .chip{
+    background:transparent;color:var(--sub);border:1px solid var(--line);
+    padding:7px 14px;border-radius:30px;cursor:pointer;font-size:13px;transition:.18s;
+  }
+  .chip:hover{color:var(--ink);border-color:#4a3a5e}
+  .chip.on{background:var(--pink);color:#1a0d16;border-color:var(--pink);font-weight:700}
+  .vol{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--sub);font-size:12px}
+  input[type=range]{accent-color:var(--pink);width:110px}
+  .empty{color:var(--sub);text-align:center;padding:80px 0}
+  .group{margin-bottom:34px}
+  .group-title{
+    display:flex;align-items:center;gap:12px;font-size:14px;font-weight:700;
+    letter-spacing:.16em;color:var(--pink2);margin:0 0 14px 2px;
+  }
+  .group-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(328px,1fr));gap:12px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;display:flex;gap:14px;align-items:center;transition:.18s;cursor:pointer;
+  }
+  .card:hover{border-color:#5a456f;background:var(--panel2);transform:translateY(-2px)}
+  .card.playing{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink),0 8px 30px -12px var(--pink)}
+  .play{
+    width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:1px solid #4a3a5e;
+    background:#241b31;color:var(--pink);display:grid;place-items:center;font-size:16px;transition:.18s;
+  }
+  .card.playing .play{background:var(--pink);color:#1a0d16;border-color:var(--pink)}
+  .meta{min-width:0;flex:1}
+  .name{font-size:15px;font-weight:650;display:flex;align-items:center;gap:8px}
+  .id{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--sub);font-weight:400;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .desc{color:var(--sub);font-size:12px;margin-top:5px;line-height:1.5}
+  .stat{color:#6f6482;font-size:11px;margin-top:6px;font-family:ui-monospace,Consolas,monospace}
+  .wave{display:flex;gap:2px;align-items:flex-end;height:16px;margin-top:7px;opacity:.5}
+  .wave i{width:3px;background:var(--pink);border-radius:2px}
+  .card.playing .wave i{animation:pulse .9s ease-in-out infinite alternate}
+  @keyframes pulse{from{transform:scaleY(.4)}to{transform:scaleY(1.15)}}
+  footer{color:#5f556f;font-size:12px;text-align:center;margin-top:40px;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">MILK FROG · LAST DROP</div>
+    <h1>午夜奶厂 · 音效库
+      <small>点击卡片试听 · 程序合成 + 原声采样 · 恐怖游戏氛围</small>
+    </h1>
+  </header>
+
+  <div class="bar" id="bar">
+    <button class="chip on" data-cat="all">全部</button>
+  </div>
+
+  <div id="list"></div>
+
+  <footer>
+    大多数音效由振荡器 / 噪声 / 滤波 / 包络 / 混响合成，WAV 16bit · 32kHz 单声道<br>
+    「人声玩梗」为网传原声采样，仅作自用测试 · 共 <span id="count">0</span> 条
+  </footer>
+</div>
+
+<script src="manifest.js"></script>
+<script>
+(function(){
+  var data = window.SFX_DATA || [];
+  var list = document.getElementById('list');
+  var bar = document.getElementById('bar');
+  var countEl = document.getElementById('count');
+  var current = null;
+  var audio = null;
+  var volRange = null;
+
+  var cats = [];
+  data.forEach(function(d){ if(cats.indexOf(d.cat)<0) cats.push(d.cat); });
+
+  cats.forEach(function(c){
+    var b=document.createElement('button');
+    b.className='chip'; b.textContent=data.find(function(x){return x.cat===c}).catZh;
+    b.setAttribute('data-cat',c);
+    bar.appendChild(b);
+  });
+
+  volRange=document.createElement('span');
+  volRange.className='vol';
+  volRange.innerHTML='音量 <input type="range" min="0" max="100" value="80" id="vol">';
+  bar.appendChild(volRange);
+
+  function bars(){
+    var h='';
+    for(var i=0;i<14;i++) h+='<i style="height:'+(4+Math.round(Math.abs(Math.sin(i*1.7))*12))+'px;animation-delay:'+(i*0.05)+'s"></i>';
+    return h;
+  }
+
+  function render(cat){
+    list.innerHTML='';
+    var shown = data.filter(function(d){return cat==='all'||d.cat===cat;});
+    countEl.textContent=data.length;
+    var groups={};
+    shown.forEach(function(d){(groups[d.cat]=groups[d.cat]||[]).push(d);});
+    Object.keys(groups).forEach(function(c){
+      var g=document.createElement('div'); g.className='group';
+      var t=document.createElement('div'); t.className='group-title';
+      t.textContent=groups[c][0].catZh+' · '+groups[c].length;
+      g.appendChild(t);
+      var grid=document.createElement('div'); grid.className='grid';
+      groups[c].forEach(function(d){
+        var card=document.createElement('div'); card.className='card'; card.dataset.id=d.id;
+        card.innerHTML=
+          '<div class="play">▶</div>'+
+          '<div class="meta">'+
+            '<div class="name">'+d.zh+'</div>'+
+            '<div class="id">'+d.id+'</div>'+
+            '<div class="desc">'+d.desc+'</div>'+
+            '<div class="stat">'+d.dur.toFixed(2)+'s · '+d.kb+'KB</div>'+
+            '<div class="wave">'+bars()+'</div>'+
+          '</div>';
+        card.addEventListener('click',function(){ play(d,card); });
+        grid.appendChild(card);
+      });
+      g.appendChild(grid); list.appendChild(g);
+    });
+  }
+
+  function stop(){
+    if(audio){audio.pause();audio.currentTime=0;audio=null;}
+    if(current){current.classList.remove('playing');current=null;}
+  }
+
+  function play(d,card){
+    if(current===card && audio && !audio.paused){stop();return;}
+    stop();
+    audio=new Audio(d.src);
+    audio.volume=parseInt(document.getElementById('vol').value,10)/100;
+    current=card; card.classList.add('playing');
+    audio.onended=function(){ if(current===card){card.classList.remove('playing');current=null;audio=null;} };
+    audio.play().catch(function(){card.classList.remove('playing');current=null;});
+  }
+
+  bar.addEventListener('click',function(e){
+    if(!e.target.classList.contains('chip'))return;
+    stop();
+    [].forEach.call(bar.querySelectorAll('.chip'),function(c){c.classList.remove('on');});
+    e.target.classList.add('on');
+    render(e.target.getAttribute('data-cat'));
+  });
+  bar.addEventListener('input',function(e){
+    if(e.target.id==='vol'&&audio)audio.volume=parseInt(e.target.value,10)/100;
+  });
+
+  render('all');
+})();
+</script>
+</body>
+</html>

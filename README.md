@@ -40,13 +40,17 @@ li-code/
     └── 06-code2.1e/        ← 第六章
         ├── 学生手册背诵-1.0.0.exe            单文件绿色版（内置运行时）
         └── 使用说明.txt                     使用说明
-    └── 07-naiwaRA/         ← 第七章（当前）
+    └── 07-naiwaRA/         ← 第七章
         ├── index.html                      PS1 风格三幕可玩场景（单文件主程序）
         ├── interaction_lab.html            道具交互实验台
         ├── motion_demo.html                角色运动演示
         ├── assets/                         GLB 模型 / Blender 源文件 / 45 个音效
         ├── vendor/                         three.js + GLTFLoader（本地化）
         └── 三份设定文档                    剧情小说 / 场景设计 / 角色运动逻辑
+    └── 08-试玩demo/        ← 第八章（当前）
+        ├── index.html                      PS1 风格可玩 Demo（主线 + 夜驾 + 归档素材）
+        ├── assets/                         角色数据 / 纸片人序列帧 / 70+ 音效
+        └── vendor/                         three.js + GLTFLoader（本地化）
 ```
 
 ## 第一章 · 01-code1
@@ -161,6 +165,24 @@ python -m http.server 8899
 # 浏览器打开 http://127.0.0.1:8899/index.html
 ```
 
+## 第八章 · 08-试玩demo
+
+《奶蛙：午夜奶厂》的**试玩 Demo** 自包含发布包，纯前端、无需构建、无需联网，
+直接双击 `index.html` 或起本地 HTTP 服务即可玩。相比第七章的源码存档，这一章只保留
+运行时必需文件，去掉 Blender 源文件、构建脚本与开发过程产物，体积更精简（约 21MB）。
+
+- `index.html`：主场景，单文件承载三幕关卡、HUD、PS1 后处理与剧情判定
+- `assets/`：角色数据 JS、纸片人序列帧与贴图、70+ 音效（含夜曲与梗音效，`manifest.js` 为索引）与音效试听页
+- `vendor/`：three.js + GLTFLoader（本地化）
+
+音频与贴图走相对路径加载，建议用本地 HTTP 服务打开：
+
+```bash
+cd chapters/08-试玩demo
+python -m http.server 8899
+# 浏览器打开 http://127.0.0.1:8899/index.html
+```
+
 ## 同步原则
 
 备份时**不包含**以下内容（已通过 `.gitignore` 排除）：
@@ -189,4 +211,4 @@ python -m http.server 8899
 - 仓库是 **Public**，请勿提交任何含密钥、token、个人隐私的内容。
 - `termux-tasker-master/` 是上游开源项目源码，仅供本地参考。
 - LFS 免费额度为 1 GiB 存储 / 1 GiB 月流量，`02-code2/release/` 已占用约 0.9 GiB，接近上限。
-- 后续新增项目直接开新的 `chapters/08-xxx/` 目录提交即可。
+- 后续新增项目直接开新的 `chapters/09-xxx/` 目录提交即可。
